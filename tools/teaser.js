@@ -99,7 +99,8 @@ async function record(name) {
   fs.writeFileSync(listFile, list.join('\n'));
 
   function ff(args) { cp.execFileSync('ffmpeg', ['-y', '-loglevel', 'error'].concat(args), { stdio: 'inherit' }); }
-  var input = ['-f', 'concat', '-safe', '0', '-i', listFile, '-vf', 'fps=30,format=yuv420p', '-an'];
+  // The frames are JPEGs (full-range colour). Chrome won't decode a full-range VP9 WebM, so convert to limited range.
+  var input = ['-f', 'concat', '-safe', '0', '-i', listFile, '-vf', 'fps=30,scale=out_range=tv,format=yuv420p', '-color_range', 'tv', '-an'];
   ff(input.concat(['-c:v', 'libx264', '-crf', '24', '-preset', 'slow', '-movflags', '+faststart', path.join(OUT, name + '.mp4')]));
   ff(input.concat(['-c:v', 'libvpx-vp9', '-crf', '36', '-b:v', '0', path.join(OUT, name + '.webm')]));
   fs.copyFileSync(path.join(tmp, String(Math.floor(frames.length * g.poster)).padStart(4, '0') + '.jpg'), path.join(OUT, name + '-poster.jpg'));
