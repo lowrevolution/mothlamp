@@ -289,13 +289,19 @@ footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: w
           <h2 id="updates-h">Hear when the lamp comes on.</h2>
           <p class="dim">One email when there's news: the full games, new demos, and PEPPERED when it's ready. Nothing else.</p>
         </div>
-        <!-- Sign-up provider: set data-action to the provider's form URL and data-field to its email field name
-             (Buttondown: https://buttondown.com/api/emails/embed-subscribe/USERNAME + "email";
-              Kit: https://app.kit.com/forms/FORM_ID/subscriptions + "email_address"). -->
-        <form class="signup" id="signup" method="post" target="_blank" data-action="" data-field="email" novalidate>
+        <!-- Sign-ups go through FormSubmit (formsubmit.co), which emails each one to mothlampstudios@pm.me. No account:
+             the first sign-up sends a one-time activation email to that inbox. After activating, FormSubmit offers a
+             random alias for the address; put it in data-action to keep the address out of the page source.
+             To move to a newsletter service later, change data-action and data-field (e.g. Buttondown:
+             https://buttondown.com/api/emails/embed-subscribe/USERNAME + "email"; Kit: https://app.kit.com/forms/FORM_ID/subscriptions + "email_address"). -->
+        <form class="signup" id="signup" method="post" data-action="https://formsubmit.co/mothlampstudios@pm.me" data-field="email" novalidate>
           <label class="sr" for="signup-email">Email address</label>
           <input id="signup-email" type="email" autocomplete="email" placeholder="you@example.com" required>
           <button class="btn primary" type="submit">Get updates</button>
+          <input type="hidden" name="_subject" value="New Mothlamp sign-up">
+          <input type="hidden" name="_template" value="table">
+          <input type="hidden" name="_next" value="https://lowrevolution.github.io/mothlamp/?signed-up#updates">
+          <input class="sr" type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true">
           <p class="signup-note" id="signup-note" aria-live="polite"></p>
         </form>
       </div>
@@ -350,7 +356,7 @@ footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: w
             <tr><th scope="row">Status</th><td>Free demos in the browser</td></tr>
             <tr><th scope="row">Platforms</th><td>Any modern browser, phone or desktop</td></tr>
             <tr><th scope="row">Built with</th><td>Vanilla JavaScript, Canvas and WebAudio. No engine, no art or audio files.</td></tr>
-            <tr><th scope="row">Contact</th><td><a href="mailto:lowrevolution@pm.me">lowrevolution@pm.me</a></td></tr>
+            <tr><th scope="row">Contact</th><td><a href="mailto:mothlampstudios@pm.me">mothlampstudios@pm.me</a></td></tr>
             <tr><th scope="row">Social</th><td><a href="https://bsky.app/profile/lowrevolutiongames.bsky.social">Bluesky</a></td></tr>
           </tbody>
         </table>
@@ -404,7 +410,7 @@ footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: w
       <p>Tiny games that glow. A label from Low Revolution.</p>
     </div>
     <ul>
-      <li><a href="mailto:lowrevolution@pm.me">lowrevolution@pm.me</a></li>
+      <li><a href="mailto:mothlampstudios@pm.me">mothlampstudios@pm.me</a></li>
       <li><a href="https://bsky.app/profile/lowrevolutiongames.bsky.social">Bluesky</a></li>
       <li><a href="https://lowrevolution.github.io/presskit/">Low Revolution press kit</a></li>
     </ul>
@@ -416,17 +422,18 @@ footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: w
 if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
   document.querySelectorAll('video[autoplay]').forEach(function (v) { v.removeAttribute('autoplay'); v.pause(); v.controls = true; });
 }
-// Email sign-up: posts to the provider set on the form (see the comment above it) in a new tab, where the provider
-// confirms the address. Until a provider is set, the form says so instead of pretending to work.
+// Email sign-up: posts to the service set on the form (see the comment above it), which shows a quick spam check and
+// then sends the visitor back here with ?signed-up. Without a service set, the form says so instead of pretending to work.
 (function () {
   var form = document.getElementById('signup'), note = document.getElementById('signup-note');
   var input = document.getElementById('signup-email'), action = form.getAttribute('data-action');
   if (!action) note.textContent = 'Sign-up isn’t connected yet.';
+  if (/[?&]signed-up\b/.test(location.search)) { note.className = 'signup-note ok'; note.textContent = 'Thanks. You’ll hear from Mothlamp when there’s news.'; }
   form.addEventListener('submit', function (e) {
     if (!input.value || !input.checkValidity()) { e.preventDefault(); note.className = 'signup-note'; note.textContent = 'Enter an email address, like you@example.com.'; input.focus(); return; }
     if (!action) { e.preventDefault(); return; }
     form.action = action; input.name = form.getAttribute('data-field') || 'email';
-    note.className = 'signup-note ok'; note.textContent = 'Nearly there: check your inbox to confirm.';
+    note.className = 'signup-note ok'; note.textContent = 'Sending…';
   });
 })();
 // Copy buttons: copy the paragraph text of their block.

@@ -41,7 +41,7 @@ Adding a game: add it to `GAMES` in `tools/sync.js`, a capture block in `tools/s
 
 The repo stays private until these are done:
 
-1. **Email sign-up.** Pick a provider, then set `data-action` and `data-field` on the `#signup` form in `index.html` (examples in the comment above it). Until then the form says "Sign-up isn't connected yet." The demos' "Get updates" buttons point to `#updates` here.
+1. **Email sign-up.** The `#signup` form posts to FormSubmit, which emails each sign-up to mothlampstudios@pm.me (no account). Do one test sign-up, then click the activation link FormSubmit sends to that inbox; until then no sign-ups are delivered. After activating, swap the address in `data-action` for FormSubmit's random alias so it isn't in the page source. The demos' "Get updates" buttons point to `#updates` here.
 2. **Play links to itch.io.** The demos ship on itch.io first (`dist/itch/*-demo.zip` in each game). Saves live with the itch version, so once the itch pages exist, point the Play buttons there and remove `play/`. Until then `play/` holds copies of the demo builds for previewing.
 3. **Demo gates.** `node tools/demo-check.js` in Chainbloom and Porchlight passes, and the manual gates (sound, real phones, cold playtests) are done.
 4. Make the repo public and turn on Pages from `main` at `/`.
