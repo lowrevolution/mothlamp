@@ -1,0 +1,80 @@
+// Records the PEPPERED "coming later" teaser: title screen, then the lamp sweeping a Night Walk until a moth
+// shivers and is caught. PEPPERED is paused (pre-alpha), so the site shows this clip instead of a playable build.
+//   node tools/teaser.js        (needs ffmpeg; reads ../Peppered/dist/peppered.html)
+// Writes assets/teaser/peppered.mp4, peppered.webm and peppered-poster.jpg.
+'use strict';
+var fs = require('fs');
+var os = require('os');
+var path = require('path');
+var cp = require('child_process');
+var cdp = require('./cdp');
+
+var ROOT = path.join(__dirname, '..');
+var GAME = path.join(ROOT, '..', 'Peppered', 'dist', 'peppered.html');
+var OUT = path.join(ROOT, 'assets', 'teaser');
+var WALK = 4;
+var W = 576, H = 720; // 4:5, phone-shaped: PEPPERED is played in portrait
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+(async function () {
+  fs.mkdirSync(OUT, { recursive: true });
+  var tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mothlamp-teaser-'));
+  var B = await cdp.launch({ width: W, height: H, settle: 1600 });
+  await B.go('file:///' + GAME.replace(/\\/g, '/') + '?skip');
+
+  var frames = [];
+  B.on('Page.screencastFrame', function (p) {
+    frames.push({ t: p.metadata.timestamp, data: p.data });
+    B.send('Page.screencastFrameAck', { sessionId: p.sessionId }).catch(function () {});
+  });
+  await B.send('Page.startScreencast', { format: 'jpeg', quality: 88, maxWidth: W, maxHeight: H, everyNthFrame: 1 });
+  await sleep(2400);
+
+  await B.eval('PP.Game.startWalk(' + WALK + '); 1');
+  await sleep(1300);
+  await B.eval('(function(){var b=[].slice.call(document.querySelectorAll("button")).find(function(e){return /Light the lamp/.test(e.textContent)});b.click();return 1})()');
+  await sleep(500);
+
+  var m = await B.eval('(function(){var m=PP.Game.round.moths[0];var s=PP.Render.w2s(m.x,m.y);return {x:s.x,y:s.y}})()');
+  // Sweep in from the far side in a slow S, then settle on the moth.
+  var start = { x: m.x > W / 2 ? W * 0.25 : W * 0.75, y: Math.max(140, m.y - 260) };
+  var steps = 70;
+  for (var i = 0; i <= steps; i++) {
+    var k = i / steps, e = k * k * (3 - 2 * k);
+    var x = start.x + (m.x - start.x) * e + Math.sin(k * Math.PI * 2) * 50 * (1 - k);
+    var y = start.y + (m.y - start.y) * e;
+    await B.mouse('mouseMoved', x, y);
+    await sleep(38);
+  }
+  await sleep(1100);
+  await B.tap(m.x, m.y);
+  await sleep(2200);
+  await B.send('Page.stopScreencast');
+  await sleep(200);
+  if (B.logs.length) console.log(B.logs.join('\n'));
+  await B.close();
+
+  // Frames arrive only when the page changes, so hold each one until the next and encode at a steady 30 fps.
+  var list = [];
+  frames.forEach(function (f, i) {
+    var file = path.join(tmp, String(i).padStart(4, '0') + '.jpg');
+    fs.writeFileSync(file, Buffer.from(f.data, 'base64'));
+    var next = frames[i + 1] ? frames[i + 1].t : f.t + 0.5;
+    list.push("file '" + file.replace(/\\/g, '/') + "'\nduration " + Math.max(0.001, next - f.t).toFixed(4));
+  });
+  list.push("file '" + path.join(tmp, String(frames.length - 1).padStart(4, '0') + '.jpg').replace(/\\/g, '/') + "'");
+  var listFile = path.join(tmp, 'frames.txt');
+  fs.writeFileSync(listFile, list.join('\n'));
+
+  function ff(args) { cp.execFileSync('ffmpeg', ['-y', '-loglevel', 'error'].concat(args), { stdio: 'inherit' }); }
+  var input = ['-f', 'concat', '-safe', '0', '-i', listFile, '-vf', 'fps=30,format=yuv420p', '-an'];
+  ff(input.concat(['-c:v', 'libx264', '-crf', '24', '-preset', 'slow', '-movflags', '+faststart', path.join(OUT, 'peppered.mp4')]));
+  ff(input.concat(['-c:v', 'libvpx-vp9', '-crf', '36', '-b:v', '0', path.join(OUT, 'peppered.webm')]));
+  fs.copyFileSync(path.join(tmp, String(Math.floor(frames.length * 0.08)).padStart(4, '0') + '.jpg'), path.join(OUT, 'peppered-poster.jpg'));
+  fs.rmSync(tmp, { recursive: true, force: true });
+
+  console.log(frames.length + ' frames, ' + (frames[frames.length - 1].t - frames[0].t).toFixed(1) + 's');
+  ['peppered.mp4', 'peppered.webm', 'peppered-poster.jpg'].forEach(function (f) {
+    console.log('assets/teaser/' + f + '  ' + Math.round(fs.statSync(path.join(OUT, f)).size / 1024) + ' KB');
+  });
+})();

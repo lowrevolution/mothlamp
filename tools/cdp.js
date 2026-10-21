@@ -1,4 +1,4 @@
-// Minimal headless-Chrome driver for playtests (no dependencies: Node's built-in WebSocket and fetch).
+// Minimal headless-Chrome driver (copied from Porchlight; adds B.on for CDP events) (no dependencies: Node's built-in WebSocket and fetch).
 //   const B = await require('./cdp').launch({ width: 390, height: 844, mobile: true });
 //   await B.go(url); await B.eval('1+1'); await B.tap(x, y); await B.shot('out.png'); await B.close();
 'use strict';
@@ -32,10 +32,11 @@ async function launch(o) {
   var page = targets.find(function (t) { return t.type === 'page'; });
   ws = new WebSocket(page.webSocketDebuggerUrl);
   await new Promise(function (r) { ws.onopen = r; });
-  var id = 0, pending = {}, logs = [];
+  var id = 0, pending = {}, logs = [], listeners = {};
   ws.onmessage = function (m) {
     var d = JSON.parse(m.data);
     if (d.id && pending[d.id]) { pending[d.id](d); delete pending[d.id]; }
+    if (d.method && listeners[d.method]) listeners[d.method].forEach(function (fn) { fn(d.params); });
     if (d.method === 'Runtime.exceptionThrown') logs.push('EXCEPTION ' + (d.params.exceptionDetails.exception && d.params.exceptionDetails.exception.description || d.params.exceptionDetails.text));
     if (d.method === 'Runtime.consoleAPICalled' && (d.params.type === 'error' || d.params.type === 'warning')) logs.push(d.params.type + ' ' + d.params.args.map(function (a) { return a.value || a.description; }).join(' '));
   };
@@ -51,6 +52,7 @@ async function launch(o) {
   if (o.mobile) await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   var B = {
     send: send, logs: logs,
+    on: function (method, fn) { (listeners[method] = listeners[method] || []).push(fn); },
     go: async function (url) { await send('Page.navigate', { url: url }); await sleep(o.settle || 900); },
     eval: async function (expr) {
       var r = await send('Runtime.evaluate', { expression: expr, returnByValue: true, awaitPromise: true });

@@ -28,15 +28,6 @@ function clickText(t) {
   await B.tap(600, 420); await sleep(1200);
   await shot('chainbloom-play');
 
-  await B.go(BASE + 'peppered.html?skip');
-  await shot('peppered-title');
-  await B.eval(clickText('Night Walk')); await sleep(800);
-  await B.eval(clickText('Walk 1')); await sleep(1500);
-  await B.eval(clickText('Light the lamp')); await sleep(800);
-  for (var x = 520; x <= 700; x += 30) { await B.mouse('mouseMoved', x, 330 + (x - 520) / 3); await sleep(60); }
-  await sleep(500);
-  await shot('peppered-play');
-
   await B.go(BASE + 'porchlight.html');
   await shot('porchlight-title');
   await B.eval(clickText('Tonight')); await sleep(1500);

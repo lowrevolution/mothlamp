@@ -1,6 +1,6 @@
 # Mothlamp
 
-The site for **Mothlamp**, the tiny-games label of Low Revolution. A static page for GitHub Pages: the home page, all three games playable in the browser, and a press section.
+The site for **Mothlamp**, the tiny-games label of Low Revolution. A static page for GitHub Pages: the home page, the CHAINBLOOM and PORCHLIGHT demos playable in the browser, a "coming later" teaser for PEPPERED (paused, pre-alpha), and a press section.
 
 Planned address: <https://lowrevolution.github.io/mothlamp/> (repo `lowrevolution/Mothlamp`, private for now; to launch, make it public and turn on Pages from `main` at `/`). The game source repos stay private; only their single-file builds are copied here.
 
@@ -17,14 +17,16 @@ Then open <http://localhost:5320/>.
 | Path | What |
 |---|---|
 | `index.html` | The whole site: hero, games, about, press. Palette and type from the brand sheet in `Chainbloom/studio/brand.html` |
-| `play/` | Single-file game builds, copied from each game's `dist/` |
+| `play/` | Single-file demo builds, copied from each game's `dist/` (CHAINBLOOM, PORCHLIGHT) |
+| `assets/teaser/` | PEPPERED teaser clip (MP4 + WebM, 4:5) and poster |
 | `assets/shots/` | Title and gameplay screenshots, 1280×800 |
 | `assets/logo/` | Mark SVGs (on ink, on cream, one colour) and PNG lockups |
 | `assets/og.png` | Link-preview image (1200×630) |
 | `tools/sync.js` | Copies the latest builds from the sibling game folders into `play/` |
 | `tools/shots.js` | Captures fresh screenshots with headless Chrome (needs the preview server on 5320) |
+| `tools/teaser.js` | Records the PEPPERED teaser from `../Peppered/dist/peppered.html` (needs ffmpeg) |
 | `tools/logos.js` | Renders the PNG logos, link-preview image and touch icon from the SVG marks |
-| `tools/cdp.js` | Tiny headless-Chrome driver (copied from Porchlight) |
+| `tools/cdp.js` | Tiny headless-Chrome driver (copied from Porchlight, plus `B.on` for CDP events) |
 
 ## Updating after a game changes
 
