@@ -16,13 +16,15 @@ Then open <http://localhost:5320/>.
 
 | Path | What |
 |---|---|
+| `store-assets.html` | Store copy (taglines, short and long descriptions, demo notes, tags) and art for each game, with copy buttons. Not linked from the site |
+| `assets/store/` | Cover and screenshots per game, copied from each game's `dist/itch/` |
 | `index.html` | The whole site: hero, games, about, press. Palette and type from the brand sheet in `Chainbloom/studio/brand.html` |
 | `play/` | Preview copies of the demo builds (CHAINBLOOM, PORCHLIGHT), from each game's `dist/*-demo.html`; replaced by itch.io links at launch |
 | `assets/teaser/` | PEPPERED teaser clip (MP4 + WebM, 4:5) and poster |
 | `assets/shots/` | Title and gameplay screenshots, 1280×800 |
 | `assets/logo/` | Mark SVGs (on ink, on cream, one colour) and PNG lockups |
 | `assets/og.png` | Link-preview image (1200×630) |
-| `tools/sync.js` | Copies the latest builds from the sibling game folders into `play/` |
+| `tools/sync.js` | Copies the latest demo builds into `play/` and the store art into `assets/store/` |
 | `tools/shots.js` | Captures fresh screenshots with headless Chrome (needs the preview server on 5320) |
 | `tools/teaser.js` | Records the PEPPERED teaser from `../Peppered/dist/peppered.html` (needs ffmpeg) |
 | `tools/logos.js` | Renders the PNG logos, link-preview image and touch icon from the SVG marks |
