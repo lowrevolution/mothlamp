@@ -1,0 +1,2617 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0E0B1F">
+<title>PORCHLIGHT</title>
+<meta name="description" content="Something happened at the porch light. Work out who was where. A tiny deduction game by Mothlamp, with a new case every night.">
+<meta property="og:title" content="PORCHLIGHT: who nibbled the jam tart?">
+<meta property="og:description" content="Six bugs, eight clues, one porch light. A new mystery every night.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%230E0B1F'/%3E%3Ccircle cx='50' cy='44' r='26' fill='%23FFB547' opacity='.35'/%3E%3Crect x='38' y='22' width='24' height='40' rx='8' fill='%23FFE2A0'/%3E%3Crect x='34' y='18' width='32' height='7' rx='3' fill='%23F6E7C8'/%3E%3Crect x='34' y='60' width='32' height='7' rx='3' fill='%23F6E7C8'/%3E%3Cellipse cx='50' cy='42' rx='5' ry='9' fill='%23fff'/%3E%3Crect x='14' y='74' width='72' height='8' rx='4' fill='%236A4A3C'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* PORCHLIGHT: UI layer. Mothlamp palette: midnight ink, one warm lamp, colour only where something is alive.
+   New for this game: clue green for a clue that's true. */
+:root {
+  --ink: #0E0B1F;
+  --ink-2: #16112F;
+  --ink-3: #221A45;
+  --line: rgba(246, 231, 200, 0.14);
+  --cream: #F6E7C8;
+  --cream-dim: rgba(246, 231, 200, 0.62);
+  --amber: #FFB547;
+  --gold: #FFE45E;
+  --coral: #FF5E6C;
+  --green: #7FD7A0;
+  --moon: #A9C4FF;
+  --font: "Fredoka", "Baloo 2", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; height: 100%; overflow: hidden;
+  background: var(--ink); color: var(--cream);
+  font-family: var(--font);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none; -webkit-user-select: none;
+}
+button { font-family: inherit; }
+input { font-family: inherit; user-select: text; -webkit-user-select: text; }
+
+#app { position: fixed; inset: 0; display: flex; flex-direction: column; background: radial-gradient(ellipse at 50% 0%, #1D1640, var(--ink) 70%); }
+#bar {
+  flex: none; display: flex; align-items: center; gap: 8px;
+  padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) 6px max(10px, env(safe-area-inset-left));
+  min-height: 58px;
+}
+#bar .ttl { flex: 1; min-width: 0; text-align: center; line-height: 1.15; }
+#bar .ttl small { display: block; color: var(--cream-dim); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
+#bar .ttl b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 16px; font-weight: 600; overflow: hidden; }
+@media (max-width: 520px) { #bar .ttl b { font-size: 14.5px; } #bar .ttl small { font-size: 11px; } }
+#bar .clock { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 15px; min-width: 44px; text-align: right; color: var(--cream-dim); }
+#bar .clock.target { color: var(--gold); }
+
+#play { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+#stage { position: relative; flex: none; touch-action: none; }
+#stage canvas { display: block; touch-action: none; }
+#clues {
+  flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 4px max(12px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+}
+body.wide #play { flex-direction: row; }
+body.wide #stage { flex: 1; }
+body.wide #clues { flex: none; width: min(410px, 40vw); padding-top: 10px; border-left: 1px solid var(--line); }
+
+/* ---------------------------------------------------------------- clues */
+.clue-head { display: flex; align-items: baseline; justify-content: space-between; margin: 8px 2px 6px; }
+.clue-head h4 { margin: 0; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--cream-dim); font-weight: 600; }
+.clue-head span { font-size: 12px; color: var(--cream-dim); }
+.clue-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.clue {
+  display: flex; align-items: center; gap: 10px; padding: 9px 8px 9px 10px; border-radius: 14px;
+  background: rgba(246, 231, 200, 0.045); box-shadow: 0 0 0 1px var(--line) inset;
+  font-size: 15.5px; line-height: 1.35; cursor: pointer; transition: background 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+.clue:hover { background: rgba(246, 231, 200, 0.08); }
+.clue .st { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700;
+  background: rgba(246, 231, 200, 0.07); color: var(--cream-dim); transition: 0.25s; }
+.clue .tx { flex: 1; min-width: 0; }
+.clue.ok { box-shadow: 0 0 0 1px rgba(127, 215, 160, 0.45) inset; }
+.clue.ok .st { background: var(--green); color: var(--ink); }
+.clue.bad { box-shadow: 0 0 0 1.5px rgba(255, 94, 108, 0.75) inset; background: rgba(255, 94, 108, 0.08); }
+.clue.bad .st { background: var(--coral); color: var(--ink); }
+.clue.hl { box-shadow: 0 0 0 2px var(--gold) inset; background: rgba(255, 228, 94, 0.08); }
+.clue.done { opacity: 0.42; }
+.clue.done .tx { text-decoration: line-through; text-decoration-color: rgba(246,231,200,0.5); }
+.clue.rule { background: rgba(246, 231, 200, 0.025); }
+.clue.rule .tag { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cream-dim); margin-right: 2px; }
+.clue.crime { background: rgba(255, 94, 108, 0.07); box-shadow: 0 0 0 1px rgba(255, 94, 108, 0.35) inset; }
+.clue.crime.ok { box-shadow: 0 0 0 1px rgba(127, 215, 160, 0.5) inset; }
+.clue .x { flex: none; appearance: none; border: 0; background: none; color: var(--cream-dim); font-size: 15px; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; }
+.clue .x:hover { background: rgba(246,231,200,0.1); color: var(--cream); }
+.clue.pop { animation: cluePop 0.5s ease; }
+@keyframes cluePop { 0% { transform: scale(1); } 35% { transform: scale(1.025); } 100% { transform: scale(1); } }
+.clue.shake { animation: shake 0.4s ease; }
+@keyframes shake { 0%, 100% { transform: none; } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+.bug { display: inline-flex; align-items: center; gap: 3px; font-weight: 600; color: var(--c, var(--cream)); white-space: nowrap; }
+.bug img { width: 20px; height: 20px; vertical-align: -4px; }
+.bug.inline img { width: 18px; height: 18px; }
+
+/* the bug says something: speech above the stage */
+#say { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); pointer-events: none; width: max-content; max-width: min(440px, 92%); z-index: 2; }
+#say .bubble {
+  background: rgba(14, 11, 31, 0.94); padding: 10px 16px; border-radius: 16px; font-size: 15.5px; line-height: 1.35; text-align: center;
+  box-shadow: 0 0 0 1px rgba(255, 181, 71, 0.45) inset, 0 10px 30px rgba(0,0,0,0.5); animation: sayIn 0.3s both;
+}
+#say .bubble.bad { box-shadow: 0 0 0 1px rgba(255, 94, 108, 0.6) inset, 0 10px 30px rgba(0,0,0,0.5); }
+#say .bubble.good { box-shadow: 0 0 0 1px rgba(127, 215, 160, 0.6) inset, 0 10px 30px rgba(0,0,0,0.5); }
+#say .bubble b { color: var(--gold); }
+#say .big-say { font-size: 22px; font-weight: 700; color: var(--gold); }
+@keyframes sayIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+
+/* ---------------------------------------------------------------- buttons */
+.btn {
+  appearance: none; border: 0; cursor: pointer;
+  font: 600 18px/1 var(--font); letter-spacing: 0.02em;
+  color: var(--ink); background: var(--amber);
+  padding: 14px 26px; border-radius: 999px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15) inset, 0 8px 30px rgba(255, 181, 71, 0.28);
+  transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.2s;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;
+}
+.btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.25) inset, 0 12px 40px rgba(255, 181, 71, 0.45); }
+.btn:active { transform: translateY(1px) scale(0.98); }
+.btn.ghost { background: rgba(246, 231, 200, 0.06); color: var(--cream); box-shadow: 0 0 0 1px var(--line) inset; }
+.btn.ghost:hover { background: rgba(246, 231, 200, 0.12); }
+.btn.small { font-size: 15px; padding: 10px 16px; }
+.btn.tiny { font-size: 13px; padding: 8px 12px; }
+.btn[disabled] { filter: grayscale(0.8) brightness(0.6); cursor: not-allowed; transform: none; }
+.icon-btn {
+  appearance: none; border: 0; cursor: pointer; width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(14, 11, 31, 0.6); color: var(--cream); font-size: 17px;
+  box-shadow: 0 0 0 1px var(--line) inset;
+  display: inline-grid; place-items: center; flex: none; position: relative;
+}
+.icon-btn:hover { background: rgba(34, 26, 69, 0.9); }
+.icon-btn.on { background: var(--amber); color: var(--ink); }
+.icon-btn svg { width: 20px; height: 20px; }
+.icon-btn .badge[hidden] { display: none; }
+.icon-btn .badge { position: absolute; top: -3px; right: -3px; min-width: 17px; height: 17px; border-radius: 9px; background: var(--coral); color: var(--ink); font-size: 11px; font-weight: 700; display: grid; place-items: center; padding: 0 4px; }
+
+/* ---------------------------------------------------------------- overlays */
+#ui { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+#ui > * { pointer-events: auto; }
+.overlay {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  animation: fadeIn 0.3s ease both;
+}
+.overlay.dim { background: rgba(7, 5, 16, 0.66); backdrop-filter: blur(3px); }
+.overlay.scroll { align-items: flex-start; overflow-y: auto; }
+.overlay.bottom { align-items: flex-end; background: linear-gradient(180deg, transparent 30%, rgba(7,5,16,0.7)); }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes pop { 0% { transform: scale(0.6); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
+
+.panel {
+  width: min(500px, 100%);
+  background: linear-gradient(180deg, rgba(34, 26, 69, 0.95), rgba(14, 11, 31, 0.97));
+  border-radius: 28px; padding: 24px;
+  box-shadow: 0 0 0 1px var(--line) inset, 0 30px 80px rgba(0, 0, 0, 0.6);
+  animation: rise 0.4s cubic-bezier(.2, .9, .3, 1.2) both;
+}
+.panel h2 { margin: 0 0 6px; font-size: 28px; font-weight: 700; line-height: 1.1; }
+.panel h3 { margin: 18px 0 10px; font-size: 17px; }
+.panel .sub { color: var(--cream-dim); margin: 0 0 16px; font-size: 16px; line-height: 1.4; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.row.center { justify-content: center; }
+.row.between { justify-content: space-between; }
+.eyebrow { font-size: 12px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--cream-dim); font-weight: 600; }
+.muted { color: var(--cream-dim); }
+.back-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+
+/* ---------------------------------------------------------------- title */
+.title { flex-direction: column; gap: 6px; text-align: center; background: radial-gradient(ellipse at 50% 40%, rgba(14,11,31,0.35), rgba(14,11,31,0.9) 70%); }
+.title .lamp { width: 84px; height: 84px; margin-bottom: 2px; animation: pop 0.9s cubic-bezier(.2, .9, .3, 1.3) both; filter: drop-shadow(0 0 30px rgba(255, 181, 71, 0.7)); }
+.logo {
+  font-weight: 700; font-size: clamp(46px, 11vw, 104px); line-height: 0.9; letter-spacing: 0.05em; margin: 0;
+  color: var(--cream); text-shadow: 0 0 34px rgba(255, 181, 71, 0.55), 0 0 2px rgba(255, 228, 160, 0.8);
+  animation: pop 0.8s cubic-bezier(.2, .9, .3, 1.3) both;
+}
+.logo .dot { color: var(--amber); }
+.tagline { font-size: clamp(16px, 3.6vw, 21px); margin: 6px 0 20px; font-weight: 500; animation: rise 0.7s 0.2s both; max-width: 30ch; line-height: 1.3; }
+.menu { display: flex; flex-direction: column; gap: 11px; align-items: center; width: min(330px, 90vw); animation: rise 0.7s 0.35s both; }
+.menu .btn { width: 100%; }
+.menu .btn .two { display: flex; flex-direction: column; gap: 4px; }
+.menu .btn small { display: block; font-size: 12px; font-weight: 500; opacity: 0.75; letter-spacing: 0.04em; }
+.menu .minor { display: flex; gap: 10px; width: 100%; }
+.menu .minor .btn { flex: 1; }
+.title .studio-mark { position: absolute; top: max(16px, env(safe-area-inset-top)); left: 18px; font-size: 13px; letter-spacing: 0.3em; color: var(--cream-dim); display: flex; gap: 8px; align-items: center; }
+.title .studio-mark svg { width: 22px; height: 22px; }
+.title .gear { position: absolute; top: max(12px, env(safe-area-inset-top)); right: 14px; }
+.title .foot { position: absolute; bottom: max(12px, env(safe-area-inset-bottom)); left: 0; right: 0; color: var(--cream-dim); font-size: 13px; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; padding: 0 16px; pointer-events: none; }
+
+/* ---------------------------------------------------------------- case cards */
+.case-card { text-align: center; }
+.case-card .crime { font-size: clamp(22px, 5vw, 28px); font-weight: 600; margin: 6px 0 14px; line-height: 1.2; }
+.case-card .cast { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 0 0 16px; }
+.case-card .cast div { width: 58px; font-size: 12px; color: var(--cream-dim); }
+.case-card .cast img { width: 46px; height: 46px; display: block; margin: 0 auto 2px; }
+.new-bug { display: flex; gap: 14px; align-items: center; text-align: left; padding: 12px 14px; border-radius: 16px; background: rgba(255, 181, 71, 0.08); box-shadow: 0 0 0 1px rgba(255, 181, 71, 0.4) inset; margin: 0 0 16px; }
+.new-bug img { width: 64px; height: 64px; flex: none; }
+.new-bug b { display: block; font-size: 18px; }
+.new-bug .rule { color: var(--gold); font-weight: 600; }
+.how { text-align: left; margin: 0 0 16px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.how li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; line-height: 1.35; }
+.how li i { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--amber); color: var(--ink); font-style: normal; font-weight: 700; font-size: 13px; display: grid; place-items: center; margin-top: -1px; }
+.target { color: var(--gold); font-weight: 600; }
+
+/* ---------------------------------------------------------------- results */
+.result { text-align: center; }
+.result .who { font-size: clamp(26px, 6vw, 34px); font-weight: 700; color: var(--gold); text-shadow: 0 0 30px rgba(255, 228, 94, 0.4); margin: 4px 0; }
+.result .quote { font-size: 17px; margin: 0 0 14px; font-style: italic; color: var(--cream); }
+.result img.culprit { width: 76px; height: 76px; display: block; margin: 0 auto; filter: drop-shadow(0 0 18px rgba(255,181,71,0.6)); animation: pop 0.6s both; }
+.stars { font-size: 32px; letter-spacing: 6px; margin: 2px 0 8px; }
+.stars .on { color: var(--gold); text-shadow: 0 0 16px rgba(255, 228, 94, 0.7); }
+.stars .off { color: rgba(246, 231, 200, 0.18); }
+.stats-row { display: flex; justify-content: center; gap: 22px; margin: 4px 0 16px; color: var(--cream-dim); font-size: 13px; flex-wrap: wrap; }
+.stats-row b { display: block; color: var(--cream); font-size: 22px; font-variant-numeric: tabular-nums; }
+.share-text { white-space: pre-wrap; font-size: 14.5px; background: rgba(0,0,0,0.28); border-radius: 12px; padding: 12px 14px; margin: 0 0 14px; text-align: left; line-height: 1.45; user-select: text; -webkit-user-select: text; }
+.unlock { margin: 0 0 14px; padding: 10px 14px; border-radius: 14px; background: rgba(255, 181, 71, 0.1); box-shadow: 0 0 0 1px rgba(255, 181, 71, 0.4) inset; font-size: 15px; }
+.unlock b { color: var(--gold); }
+.code-field { display: flex; gap: 8px; margin: 0 0 6px; }
+.code-field input { flex: 1; min-width: 0; font-size: 18px; padding: 12px 14px; border-radius: 14px; border: 0; background: rgba(0,0,0,0.3); color: var(--cream); box-shadow: 0 0 0 1px var(--line) inset; letter-spacing: 0.06em; }
+.err { color: var(--coral); font-size: 14px; min-height: 18px; }
+
+/* ---------------------------------------------------------------- case files */
+.nights { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 10px 0 4px; }
+.night { appearance: none; border: 0; cursor: pointer; border-radius: 14px; padding: 10px 2px 8px; background: rgba(246,231,200,0.06); color: var(--cream);
+  box-shadow: 0 0 0 1px var(--line) inset; font: 600 17px/1 var(--font); transition: 0.15s; position: relative; }
+.night small { display: block; font-size: 11px; color: var(--gold); margin-top: 5px; letter-spacing: 1px; min-height: 12px; }
+.night:hover { background: rgba(255, 181, 71, 0.16); transform: translateY(-2px); }
+.night.locked { opacity: 0.3; cursor: not-allowed; transform: none; }
+.night.next { box-shadow: 0 0 0 2px var(--amber) inset, 0 0 18px rgba(255,181,71,0.3); }
+.night img { position: absolute; top: -8px; right: -6px; width: 24px; height: 24px; }
+.tiers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 6px 0 16px; }
+.tier { appearance: none; border: 0; cursor: pointer; border-radius: 18px; padding: 14px 12px; text-align: left; background: rgba(246,231,200,0.06); color: var(--cream); box-shadow: 0 0 0 1px var(--line) inset; font: 600 18px/1.1 var(--font); transition: 0.15s; }
+.tier:hover { background: rgba(255, 181, 71, 0.16); transform: translateY(-2px); }
+.tier small { display: block; font-weight: 500; font-size: 13px; color: var(--cream-dim); margin-top: 6px; }
+.book { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 14px; }
+.book .sp { display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: center; padding: 8px 10px; border-radius: 16px; background: rgba(246,231,200,0.035); box-shadow: 0 0 0 1px var(--line) inset; }
+.book .sp img { width: 52px; height: 52px; }
+.book .sp b { font-size: 16px; }
+.book .sp .rule { color: var(--gold); font-size: 14px; font-weight: 600; }
+.book .sp .bl { color: var(--cream-dim); font-size: 14px; }
+.book .sp.locked { opacity: 0.4; }
+.book .sp.locked img { filter: brightness(0) opacity(0.5); }
+.toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 2px; border-bottom: 1px dashed var(--line); font-size: 16px; }
+.switch { appearance: none; width: 50px; height: 28px; border-radius: 14px; background: rgba(246,231,200,0.15); position: relative; cursor: pointer; border: 0; transition: 0.2s; }
+.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--cream); transition: 0.2s; }
+.switch.on { background: var(--amber); }
+.switch.on::after { left: 25px; }
+
+@media (max-width: 400px) {
+  .clue { font-size: 14.5px; padding: 8px 6px 8px 8px; gap: 8px; }
+  .panel { padding: 20px 18px; }
+  .nights { gap: 6px; }
+}
+
+</style>
+</head>
+<body>
+<div id="app">
+    <header id="bar"></header>
+    <main id="play">
+      <div id="stage"><canvas id="game" aria-label="PORCHLIGHT porch"></canvas><div id="say"></div></div>
+      <aside id="clues" aria-label="Clues"></aside>
+    </main>
+  </div>
+  <div id="ui"></div>
+<script>
+var PL = window.PL = window.PL || {}; PL.VERSION = "0.1.0";
+// ---- src/util.js
+// PORCHLIGHT: shared utilities. Loaded first; everything hangs off the PL namespace.
+// Works in the browser (window.PL) and in Node (tools/*.js load these files with vm.runInThisContext).
+//
+// Determinism rule: a daily case or a dare link is just a seed, so every device must build the identical
+// puzzle from it. Everything up to cases.js is integer logic on this RNG: no floats feed a decision
+// except RNG.next(), which is exact (a 32-bit integer divided by 2^32).
+var PL = (typeof window !== 'undefined') ? (window.PL = window.PL || {}) : (globalThis.PL = globalThis.PL || {});
+
+(function (PL) {
+  'use strict';
+
+  // Seedable PRNG (mulberry32).
+  function RNG(seed) { this.s = (seed >>> 0) || 1; }
+  RNG.prototype.u32 = function () {
+    var t = (this.s = (this.s + 0x6D2B79F5) >>> 0);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return (t ^ (t >>> 14)) >>> 0;
+  };
+  RNG.prototype.next = function () { return this.u32() / 4294967296; };
+  RNG.prototype.int = function (a, b) { return a + Math.floor(this.next() * (b - a + 1)); };
+  RNG.prototype.pick = function (arr) { return arr[Math.floor(this.next() * arr.length)]; };
+  RNG.prototype.chance = function (p) { return this.next() < p; };
+  RNG.prototype.shuffle = function (arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(this.next() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  };
+  // Order items by integer weight without replacement: repeated weighted draws. Integer-only on purpose
+  // (Math.log-based keys aren't guaranteed bit-identical across engines). Zero-weight items are dropped.
+  RNG.prototype.weightedOrder = function (items, weightOf) {
+    var left = [], ws = [], total = 0, out = [];
+    items.forEach(function (it) { var w = weightOf(it) | 0; if (w > 0) { left.push(it); ws.push(w); total += w; } });
+    while (left.length) {
+      var r = this.u32() % total, i = 0;
+      while (r >= ws[i]) { r -= ws[i]; i++; }
+      out.push(left[i]); total -= ws[i];
+      left.splice(i, 1); ws.splice(i, 1);
+    }
+    return out;
+  };
+
+  function hashString(str) {
+    var h = 2166136261 >>> 0;
+    for (var i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995); h ^= h >>> 15;
+    return h >>> 0;
+  }
+
+  // Local calendar date as YYYY-MM-DD. The daily case changes at the player's midnight.
+  function dateKey(d) {
+    d = d || new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  // Days since 2026-01-01 for a YYYY-MM-DD key (UTC arithmetic, so DST never shifts it).
+  function dayNumber(key) {
+    var p = key.split('-').map(Number);
+    return Math.round((Date.UTC(p[0], p[1] - 1, p[2]) - Date.UTC(2026, 0, 1)) / 86400000);
+  }
+  function weekday(key) {
+    var p = key.split('-').map(Number);
+    return new Date(Date.UTC(p[0], p[1] - 1, p[2])).getUTCDay(); // 0 = Sunday
+  }
+
+  function clamp(x, a, b) { return x < a ? a : x > b ? b : x; }
+  function fmtTime(sec) {
+    sec = Math.max(0, Math.floor(sec));
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
+  PL.RNG = RNG;
+  PL.hashString = hashString;
+  PL.dateKey = dateKey;
+  PL.dayNumber = dayNumber;
+  PL.weekday = weekday;
+  PL.clamp = clamp;
+  PL.fmtTime = fmtTime;
+})(PL);
+
+// ---- src/board.js
+// PORCHLIGHT: porch layouts. A board is a grid of tiles; floor tiles belong to a named spot (the rug, the
+// doormat…), object tiles hold furniture. The house wall runs along the top edge: the door sits above the
+// doormat and the porch lamp hangs on the wall. Light is a property of tiles: a tile is lit when its centre
+// is inside a lamp's (or a lantern's) pool. Everything is integers so cases rebuild identically everywhere.
+(function (PL) {
+  'use strict';
+
+  // Spot kinds. Each layout uses each kind at most once, so "on the rug" is never ambiguous.
+  var SPOTS = {
+    doormat: { name: 'the doormat', on: 'on the doormat' },
+    boards: { name: 'the boards', on: 'on the boards' },
+    rug: { name: 'the rug', on: 'on the rug' },
+    steps: { name: 'the steps', on: 'on the steps' },
+    flowerbed: { name: 'the flowerbed', on: 'in the flowerbed' },
+    lawn: { name: 'the lawn', on: 'on the lawn' },
+    path: { name: 'the path', on: 'on the path' },
+    gravel: { name: 'the gravel', on: 'on the gravel' }
+  };
+
+  // Objects. `a` is how a clue mentions any one of that kind; `the` names the single one a crime happens at.
+  // light2: an object that is itself a light (radius² in half-tiles).
+  var OBJECTS = {
+    P: { id: 'pot', a: 'a flowerpot', the: 'the flowerpot' },
+    T: { id: 'table', a: 'the tea table', the: 'the tea table' },
+    G: { id: 'gnome', a: 'the gnome', the: 'the gnome' },
+    B: { id: 'boots', a: 'the wellies', the: 'the wellies' },
+    W: { id: 'can', a: 'the watering can', the: 'the watering can' },
+    C: { id: 'chair', a: 'the rocking chair', the: 'the rocking chair' },
+    X: { id: 'parcel', a: 'the parcel', the: 'the parcel' },
+    N: { id: 'lantern', a: 'the lantern', the: 'the lantern', light2: 9 }
+  };
+
+  // Layout grids: lowercase letters are floor tiles of a spot (see `spots`), uppercase are objects.
+  // lamp: [x, y] in half-tiles (tile x's centre is 2x+1; y = -1 is on the wall above row 0), r2 its radius².
+  var LAYOUTS = [
+    { id: 'front-step', name: 'The Front Step', tier: 'S', lamp: [5, -1], r2: 20,
+      spots: { m: 'doormat', b: 'boards', s: 'steps' },
+      grid: ['mmbP', 'mmbb', 'bbbT', 'ssss'] },
+    { id: 'gnome-corner', name: 'Gnome Corner', tier: 'S', lamp: [3, -1], r2: 20,
+      spots: { r: 'rug', m: 'doormat', b: 'boards', s: 'steps' },
+      grid: ['rrmmb', 'rrmmb', 'Cbbbb', 'ssssG'] },
+    { id: 'rocking-chair', name: 'The Rocking Chair', tier: 'M', lamp: [7, -1], r2: 20,
+      spots: { f: 'flowerbed', m: 'doormat', b: 'boards', r: 'rug', s: 'steps' },
+      grid: ['fmmbP', 'fmmbb', 'frrCb', 'frrbb', 'Wssss'] },
+    { id: 'garden-gate', name: 'The Garden Gate', tier: 'M', lamp: [5, -1], r2: 13,
+      spots: { m: 'doormat', b: 'boards', p: 'path', l: 'lawn', g: 'gravel' },
+      grid: ['mmbbb', 'mmbTb', 'pppbb', 'lNpgG', 'llpgg'] },
+    { id: 'long-porch', name: 'The Long Porch', tier: 'L', lamp: [7, -1], r2: 20,
+      spots: { f: 'flowerbed', m: 'doormat', b: 'boards', r: 'rug', s: 'steps' },
+      grid: ['fmmbbP', 'fmmbbb', 'frrrCb', 'frrrbb', 'Bsssss'] },
+    { id: 'back-garden', name: 'The Back Garden', tier: 'L', lamp: [5, -1], r2: 20,
+      spots: { m: 'doormat', b: 'boards', p: 'path', l: 'lawn', g: 'gravel' },
+      grid: ['mmbbbb', 'mmbTbN', 'pppbbb', 'llpGgg', 'llpggg'] },
+    { id: 'tea-party', name: 'The Tea Party', tier: 'XL', lamp: [7, -1], r2: 20,
+      spots: { f: 'flowerbed', m: 'doormat', b: 'boards', r: 'rug', l: 'lawn', p: 'path', g: 'gravel' },
+      grid: ['fmmbbbP', 'fmmbTbb', 'frrrbbb', 'frrrbCb', 'llppggg', 'lBppggN'], lanternR2: 17 },
+    { id: 'party-night', name: 'Party Night', tier: 'XL', lamp: [5, -1], r2: 20,
+      spots: { m: 'doormat', b: 'boards', r: 'rug', l: 'lawn', f: 'flowerbed', s: 'steps' },
+      grid: ['Pbbmmbb', 'bbbmmbN', 'rrbbbbb', 'rrrbCll', 'ffbbbll', 'ssssssW'] }
+  ];
+  var BY_ID = {};
+  LAYOUTS.forEach(function (l) { BY_ID[l.id] = l; });
+
+  // Build a board from a layout (optionally mirrored left↔right).
+  function build(layoutId, mirror) {
+    var L = BY_ID[layoutId];
+    if (!L) throw new Error('unknown layout ' + layoutId);
+    var H = L.grid.length, W = L.grid[0].length;
+    var grid = L.grid.map(function (row) { return mirror ? row.split('').reverse().join('') : row; });
+    var lamp = { x: mirror ? 2 * W - L.lamp[0] : L.lamp[0], y: L.lamp[1], r2: L.r2 };
+    var lights = [lamp];
+    var tiles = [], spots = [], spotIndex = {};
+    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
+      var ch = grid[y][x], t = { i: y * W + x, x: x, y: y, spot: -1, obj: null };
+      if (ch >= 'a' && ch <= 'z') {
+        if (!(ch in spotIndex)) {
+          var kind = L.spots[ch];
+          spotIndex[ch] = spots.length;
+          spots.push({ kind: kind, name: SPOTS[kind].name, on: SPOTS[kind].on, tiles: [] });
+        }
+        t.spot = spotIndex[ch];
+        spots[t.spot].tiles.push(t.i);
+      } else {
+        t.obj = ch;
+        var O = OBJECTS[ch];
+        if (O && O.light2) lights.push({ x: 2 * x + 1, y: 2 * y + 1, r2: L.lanternR2 || O.light2, lantern: true });
+      }
+      tiles.push(t);
+    }
+    tiles.forEach(function (t) {
+      t.n = [];
+      if (t.x > 0) t.n.push(t.i - 1);
+      if (t.x < W - 1) t.n.push(t.i + 1);
+      if (t.y > 0) t.n.push(t.i - W);
+      if (t.y < H - 1) t.n.push(t.i + W);
+      t.edge = t.x === 0 || t.y === 0 || t.x === W - 1 || t.y === H - 1;
+      t.lit = false;
+      if (t.spot >= 0) {
+        var cx = 2 * t.x + 1, cy = 2 * t.y + 1;
+        for (var k = 0; k < lights.length; k++) {
+          var dx = cx - lights[k].x, dy = cy - lights[k].y;
+          if (dx * dx + dy * dy <= lights[k].r2) { t.lit = true; break; }
+        }
+      }
+    });
+    // Which object kinds each tile touches (for "next to a flowerpot").
+    tiles.forEach(function (t) {
+      t.nextObj = {};
+      t.n.forEach(function (j) { if (tiles[j].obj) t.nextObj[tiles[j].obj] = true; });
+    });
+    var floor = tiles.filter(function (t) { return t.spot >= 0; }).map(function (t) { return t.i; });
+    var objCount = {};
+    tiles.forEach(function (t) { if (t.obj) objCount[t.obj] = (objCount[t.obj] || 0) + 1; });
+    var doorTiles = tiles.filter(function (t) { return t.y === 0 && t.spot >= 0 && spots[t.spot].kind === 'doormat'; }).map(function (t) { return t.x; });
+    return {
+      id: layoutId, name: L.name, tier: L.tier, mirror: !!mirror, W: W, H: H,
+      tiles: tiles, floor: floor, spots: spots, lights: lights, objCount: objCount,
+      door: doorTiles.length ? [Math.min.apply(null, doorTiles), Math.max.apply(null, doorTiles)] : null
+    };
+  }
+
+  function adjacent(board, a, b) { return board.tiles[a].n.indexOf(b) >= 0; }
+
+  PL.SPOTS = SPOTS;
+  PL.OBJECTS = OBJECTS;
+  PL.LAYOUTS = LAYOUTS;
+  PL.buildBoard = build;
+  PL.adjacent = adjacent;
+})(PL);
+
+// ---- src/cast.js
+// PORCHLIGHT: the suspects. Every case uses one bug of each chosen species. Some species carry a standing
+// rule, which is simply a clue that's always true for that bug and printed on its card instead of the list.
+(function (PL) {
+  'use strict';
+
+  // rule: a clue template (see clues.js) applied to this bug. unlock: campaign night it first appears.
+  var SPECIES = [
+    { id: 'beetle', name: 'Beetle', emoji: '🪲', color: '#9A7BFF', unlock: 1, rule: null,
+      blurb: 'Shiny, earnest, a little dense.',
+      confess: ['"I thought it was a very small cake for a very small beetle."', '"I panicked. I always panic. Look at my shell."', '"In my defence, it was right there."'],
+      alibi: '"Me? I was polishing my wing cases all night."' },
+    { id: 'ladybug', name: 'Ladybug', emoji: '🐞', color: '#FF5E6C', unlock: 1, rule: null,
+      blurb: 'Seven spots. Counts them often.',
+      confess: ['"Fine. FINE. It was me. Happy?"', '"I was framed. By myself. Accidentally."', '"Spot number four made me do it."'],
+      alibi: '"I was counting my spots. All seven. Twice."' },
+    { id: 'bee', name: 'Bee', emoji: '🐝', color: '#FFD23E', unlock: 1, rule: null,
+      blurb: 'Busy. Very busy. Ask her how busy.',
+      confess: ['"Bzzzorry."', '"I\'m on a schedule and the schedule said snacks."', '"I\'d do it again. Bzz."'],
+      alibi: '"I had six meetings, a hive call and a nectar run."' },
+    { id: 'moth', name: 'Moth', emoji: '🦋', color: '#F6E7C8', unlock: 4, rule: { t: 'light', v: 1 },
+      ruleText: 'Always in the light.', blurb: 'Cannot. Stop. Looking. At. The lamp.',
+      confess: ['"The light told me to."', '"I don\'t remember. I was looking at the lamp."', '"Is the lamp still on? Then I\'m fine with this."'],
+      alibi: '"I was staring at the lamp. Ask anyone. Ask the lamp."' },
+    { id: 'firefly', name: 'Firefly', emoji: '✨', color: '#C9FF5E', unlock: 7, rule: { t: 'light', v: 0 },
+      ruleText: 'Always in the dark.', blurb: 'Only shines where it\'s dark enough to notice.',
+      confess: ['"Nobody saw me. That was the whole plan."', '"Wow. Okay. I glow, but you didn\'t have to SPOTLIGHT me."', '"I was making my own light. And mistakes."'],
+      alibi: '"I was blinking in the dark. Blink. Blink. Innocent."' },
+    { id: 'spider', name: 'Spider', emoji: '🕷️', color: '#B98CFF', unlock: 10, rule: { t: 'edge', v: 1 },
+      ruleText: 'Always at the edge of the porch.', blurb: 'Weaves from the corners. Watches everything.',
+      confess: ['"Eight legs, zero regrets."', '"I was only going to watch. Then I wasn\'t."', '"You\'ve caught me. Ironic, really."'],
+      alibi: '"I was in my web. I\'m always in my web."' },
+    { id: 'snail', name: 'Snail', emoji: '🐌', color: '#FF9DB8', unlock: 14, rule: { t: 'objany', v: 1 },
+      ruleText: 'Always next to something to hide behind.', blurb: 'Slow. Shy. Leaves evidence everywhere.',
+      confess: ['"I would have got away with it if I were faster."', '"The slime trail? That\'s… circumstantial."', '"It took me forty minutes and I regret none of them."'],
+      alibi: '"I couldn\'t have got there in time. Look at me."' },
+    { id: 'ant', name: 'Ant', emoji: '🐜', color: '#FF8A47', unlock: 18, rule: { t: 'near', v: 1 },
+      ruleText: 'Always next to another bug.', blurb: 'Never alone. Never quiet about it.',
+      confess: ['"I was just carrying it home for the colony!"', '"Someone had to. It was me. I was someone."', '"Technically the colony did it. I\'m the colony."'],
+      alibi: '"I was with someone the whole time. I\'m always with someone."' },
+    { id: 'cricket', name: 'Cricket', emoji: '🦗', color: '#6EF29A', unlock: 22, rule: { t: 'near', v: 0 },
+      ruleText: 'Never next to another bug.', blurb: 'Rehearsing. Always rehearsing. Alone.',
+      confess: ['"I was rehearsing. It got out of hand."', '"Chirp. That means sorry."', '"Art requires sacrifice. Mostly other people\'s."'],
+      alibi: '"I was alone, rehearsing my solo. As usual."' }
+  ];
+  var BY_ID = {};
+  SPECIES.forEach(function (s, i) { s.index = i; BY_ID[s.id] = s; });
+
+  PL.SPECIES = SPECIES;
+  PL.species = function (id) { return BY_ID[id]; };
+})(PL);
+
+// ---- src/clues.js
+// PORCHLIGHT: clue types. A clue is a small plain object; `a` and `b` are suspect indices into the case's cast.
+//   spot   a, s, v      a is (v=1) / isn't (v=0) on spot s
+//   light  a, v         a is in the light (1) / in the dark (0)
+//   obj    a, o, v      a is / isn't next to an object of kind o
+//   objany a, v         a is / isn't next to any object
+//   edge   a, v         a is / isn't at the edge of the porch
+//   adj    a, b, v      a is / isn't next to b (sharing a side)
+//   same   a, b, v      a and b share a spot / are on different spots
+//   row    a, b         same row          col  a, b   same column
+//   left   a, b         a's column is left of b's      above a, b   a's row is above b's
+//   near   a, v         a is / isn't next to any other bug
+//   alone  a            a is the only bug on its spot
+//   count  scope, v     exactly v bugs are in scope: {k:'spot', s} | {k:'lit'} | {k:'dark'} | {k:'crime'} (next to the crime)
+// Plus the standing rule: no two bugs share a tile.
+(function (PL) {
+  'use strict';
+
+  function inScope(board, clue, tile, crimeTile) {
+    var t = board.tiles[tile];
+    switch (clue.k) {
+      case 'spot': return t.spot === clue.s;
+      case 'lit': return t.lit;
+      case 'dark': return !t.lit;
+      case 'crime': return board.tiles[crimeTile].n.indexOf(tile) >= 0;
+    }
+    return false;
+  }
+
+  // Unary truth for a single bug on a tile (null when the clue isn't unary in that bug).
+  function unary(board, c, tile) {
+    var t = board.tiles[tile];
+    switch (c.t) {
+      case 'spot': return (t.spot === c.s) === !!c.v;
+      case 'light': return t.lit === !!c.v;
+      case 'obj': return !!t.nextObj[c.o] === !!c.v;
+      case 'objany': return (Object.keys(t.nextObj).length > 0) === !!c.v;
+      case 'edge': return t.edge === !!c.v;
+    }
+    return null;
+  }
+  function isUnary(c) { return c.t === 'spot' || c.t === 'light' || c.t === 'obj' || c.t === 'objany' || c.t === 'edge'; }
+  function isBinary(c) { return c.t === 'adj' || c.t === 'same' || c.t === 'row' || c.t === 'col' || c.t === 'left' || c.t === 'above'; }
+
+  // Binary truth for a on tile p, b on tile q (p != q).
+  function binary(board, c, p, q) {
+    var A = board.tiles[p], B = board.tiles[q];
+    switch (c.t) {
+      case 'adj': return (A.n.indexOf(q) >= 0) === !!c.v;
+      case 'same': return (A.spot === B.spot) === !!c.v;
+      case 'row': return A.y === B.y;
+      case 'col': return A.x === B.x;
+      case 'left': return A.x < B.x;
+      case 'above': return A.y < B.y;
+    }
+    return null;
+  }
+
+  // Full evaluation: every bug placed.
+  function holds(board, c, pos, crimeTile) {
+    if (isUnary(c)) return unary(board, c, pos[c.a]);
+    if (isBinary(c)) return binary(board, c, pos[c.a], pos[c.b]);
+    var i, n = 0;
+    switch (c.t) {
+      case 'near':
+        for (i = 0; i < pos.length; i++) if (i !== c.a && board.tiles[pos[c.a]].n.indexOf(pos[i]) >= 0) n++;
+        return (n > 0) === !!c.v;
+      case 'alone':
+        for (i = 0; i < pos.length; i++) if (i !== c.a && board.tiles[pos[i]].spot === board.tiles[pos[c.a]].spot) return false;
+        return true;
+      case 'count':
+        for (i = 0; i < pos.length; i++) if (inScope(board, c, pos[i], crimeTile)) n++;
+        return n === c.v;
+    }
+    throw new Error('unknown clue ' + c.t);
+  }
+
+  // Live state for the UI while the player is still placing bugs: 1 satisfied, -1 broken, 0 not yet decided.
+  function state(board, c, pos, crimeTile) {
+    var all = pos.every(function (p) { return p >= 0; });
+    if (all) return holds(board, c, pos, crimeTile) ? 1 : -1;
+    if (isUnary(c)) return pos[c.a] < 0 ? 0 : unary(board, c, pos[c.a]) ? 1 : -1;
+    if (isBinary(c)) return pos[c.a] < 0 || pos[c.b] < 0 ? 0 : binary(board, c, pos[c.a], pos[c.b]) ? 1 : -1;
+    var i, n = 0, open = 0;
+    switch (c.t) {
+      case 'near':
+        if (pos[c.a] < 0) return 0;
+        for (i = 0; i < pos.length; i++) if (i !== c.a && pos[i] >= 0 && board.tiles[pos[c.a]].n.indexOf(pos[i]) >= 0) n++;
+        return c.v ? (n > 0 ? 1 : 0) : (n > 0 ? -1 : 0);
+      case 'alone':
+        if (pos[c.a] < 0) return 0;
+        for (i = 0; i < pos.length; i++) if (i !== c.a && pos[i] >= 0 && board.tiles[pos[i]].spot === board.tiles[pos[c.a]].spot) return -1;
+        return 0;
+      case 'count':
+        for (i = 0; i < pos.length; i++) { if (pos[i] < 0) open++; else if (inScope(board, c, pos[i], crimeTile)) n++; }
+        return n > c.v || n + open < c.v ? -1 : 0;
+    }
+    return 0;
+  }
+
+  // Bugs a clue talks about (for highlighting).
+  function involves(c) {
+    var out = [];
+    if (c.a !== undefined) out.push(c.a);
+    if (c.b !== undefined) out.push(c.b);
+    return out;
+  }
+
+  // ---------------------------------------------------------------- text
+  // Returns segments: strings, and {bug: k} where the UI draws that bug's name with its icon.
+  var NUM = ['No', 'Exactly one', 'Exactly two', 'Exactly three', 'Exactly four', 'Exactly five', 'Exactly six', 'Exactly seven'];
+  function text(c, ctx) {
+    var board = ctx.board, A = { bug: c.a }, B = { bug: c.b };
+    var obj = c.o && PL.OBJECTS[c.o];
+    switch (c.t) {
+      case 'spot': return [A, c.v ? ' was ' : ' wasn\'t ', board.spots[c.s].on + '.'];
+      case 'light': return [A, c.v ? ' was in the light.' : ' was in the dark.'];
+      case 'obj': return [A, c.v ? ' was next to ' : ' wasn\'t next to ', (board.objCount[c.o] > 1 ? obj.a : obj.the) + '.'];
+      case 'objany': return [A, c.v ? ' was next to an object.' : ' wasn\'t next to any object.'];
+      case 'edge': return [A, c.v ? ' was at the edge of the porch.' : ' wasn\'t at the edge of the porch.'];
+      case 'adj': return [A, c.v ? ' was next to ' : ' wasn\'t next to ', B, '.'];
+      case 'same': return c.v ? [A, ' and ', B, ' were on the same spot.'] : [A, ' and ', B, ' were on different spots.'];
+      case 'row': return [A, ' and ', B, ' were in the same row.'];
+      case 'col': return [A, ' and ', B, ' were in the same column.'];
+      case 'left': return [A, ' was in a column left of ', B, '.'];
+      case 'above': return [A, ' was in a row above ', B, '.'];
+      case 'near': return [A, c.v ? ' was next to another bug.' : ' wasn\'t next to any other bug.'];
+      case 'alone': return [A, ' had its spot all to itself.'];
+      case 'count': {
+        var n = c.v, who = n === 0 ? 'Nobody was' : n === 1 ? 'Exactly one bug was' : NUM[n] + ' bugs were';
+        if (c.k === 'spot') return [who + ' ' + board.spots[c.s].on + '.'];
+        if (c.k === 'lit') return [who + ' in the light.'];
+        if (c.k === 'dark') return [who + ' in the dark.'];
+        if (c.k === 'crime') return [n === 1 ? 'Only one bug was next to ' + PL.OBJECTS[board.tiles[ctx.crimeTile].obj].the + '. That\'s the culprit.' : who + ' next to the scene.'];
+      }
+    }
+    return ['?'];
+  }
+  function plain(c, ctx) {
+    return text(c, ctx).map(function (s) { return typeof s === 'string' ? s : 'the ' + PL.species(ctx.cast[s.bug]).name; })
+      .join('').replace(/^the /, 'The ');
+  }
+
+  PL.clue = { holds: holds, state: state, unary: unary, binary: binary, isUnary: isUnary, isBinary: isBinary,
+    inScope: inScope, involves: involves, text: text, plain: plain };
+})(PL);
+
+// ---- src/solver.js
+// PORCHLIGHT: the solver. Domains are, per bug, the tiles it could still be on. `propagate` applies the kinds
+// of reasoning a person does on paper (this clue rules out that tile; that bug is pinned so nobody else can be
+// there; only two bugs could be in the light and the clue says two) until nothing changes.
+// The generator only accepts cases that propagation solves outright, or with one-step lookahead
+// ("if the Moth were here, the Bee would have nowhere to go") for the hardest tier. No case needs guessing.
+(function (PL) {
+  'use strict';
+  var C = PL.clue;
+
+  // P: { board, n, clues, crimeTile }
+  function initial(P) {
+    var D = [];
+    for (var k = 0; k < P.n; k++) D.push(P.board.floor.slice());
+    P.clues.forEach(function (c) {
+      if (C.isUnary(c)) D[c.a] = D[c.a].filter(function (t) { return C.unary(P.board, c, t); });
+    });
+    return D;
+  }
+  function copy(D) { return D.map(function (d) { return d.slice(); }); }
+
+  function propagate(P, D, stats) {
+    var board = P.board, tiles = board.tiles, n = P.n;
+    var changed = true, rounds = 0;
+    function restrict(k, keep) {
+      var before = D[k].length;
+      D[k] = D[k].filter(keep);
+      if (D[k].length !== before) { changed = true; if (stats) stats.elims += before - D[k].length; }
+      return D[k].length > 0;
+    }
+    while (changed) {
+      changed = false; rounds++;
+      for (var k = 0; k < n; k++) if (!D[k].length) return false;
+      // One bug per tile.
+      for (k = 0; k < n; k++) {
+        if (D[k].length !== 1) continue;
+        var v = D[k][0];
+        for (var j = 0; j < n; j++) if (j !== k && D[j].indexOf(v) >= 0 && !restrict(j, function (t) { return t !== v; })) return false;
+      }
+      for (var ci = 0; ci < P.clues.length; ci++) {
+        var c = P.clues[ci];
+        if (C.isBinary(c)) {
+          var a = c.a, b = c.b;
+          if (!restrict(a, function (p) { return D[b].some(function (q) { return q !== p && C.binary(board, c, p, q); }); })) return false;
+          if (!restrict(b, function (q) { return D[a].some(function (p) { return q !== p && C.binary(board, c, p, q); }); })) return false;
+        } else if (c.t === 'count') {
+          var must = [], may = [];
+          for (k = 0; k < n; k++) {
+            var inside = D[k].filter(function (t) { return C.inScope(board, c, t, P.crimeTile); }).length;
+            if (inside === D[k].length) must.push(k);
+            if (inside > 0) may.push(k);
+          }
+          if (must.length > c.v || may.length < c.v) return false;
+          if (must.length === c.v) {
+            for (k = 0; k < n; k++) if (must.indexOf(k) < 0 && !restrict(k, function (t) { return !C.inScope(board, c, t, P.crimeTile); })) return false;
+          }
+          if (may.length === c.v) {
+            for (var m = 0; m < may.length; m++) if (!restrict(may[m], function (t) { return C.inScope(board, c, t, P.crimeTile); })) return false;
+          }
+        } else if (c.t === 'near') {
+          var A = c.a;
+          if (c.v) {
+            // Some other bug must be able to stand next to it.
+            if (!restrict(A, function (p) {
+              for (var j = 0; j < n; j++) if (j !== A && D[j].some(function (q) { return tiles[p].n.indexOf(q) >= 0; })) return true;
+              return false;
+            })) return false;
+            if (D[A].length === 1) {
+              var p0 = D[A][0], cand = [];
+              for (j = 0; j < n; j++) if (j !== A && D[j].some(function (q) { return tiles[p0].n.indexOf(q) >= 0; })) cand.push(j);
+              if (cand.length === 1 && !restrict(cand[0], function (q) { return tiles[p0].n.indexOf(q) >= 0; })) return false;
+            }
+          } else {
+            // Nobody may stand next to it: a pinned neighbour rules tiles out, and vice versa.
+            if (!restrict(A, function (p) {
+              for (var j = 0; j < n; j++) if (j !== A && D[j].every(function (q) { return tiles[p].n.indexOf(q) >= 0; })) return false;
+              return true;
+            })) return false;
+            if (D[A].length === 1) {
+              var pa = D[A][0];
+              for (j = 0; j < n; j++) if (j !== A && !restrict(j, function (q) { return tiles[pa].n.indexOf(q) < 0; })) return false;
+            }
+          }
+        } else if (c.t === 'alone') {
+          var al = c.a;
+          if (!restrict(al, function (p) {
+            var s = tiles[p].spot;
+            for (var j = 0; j < n; j++) if (j !== al && D[j].every(function (q) { return tiles[q].spot === s; })) return false;
+            return true;
+          })) return false;
+          var spots = {};
+          D[al].forEach(function (p) { spots[tiles[p].spot] = 1; });
+          var ks = Object.keys(spots);
+          if (ks.length === 1) {
+            var s1 = +ks[0];
+            for (j = 0; j < n; j++) if (j !== al && !restrict(j, function (q) { return tiles[q].spot !== s1; })) return false;
+          }
+        }
+      }
+    }
+    if (stats) stats.rounds += rounds;
+    return true;
+  }
+
+  function solved(D) { return D.every(function (d) { return d.length === 1; }); }
+  function valid(P, pos) {
+    for (var i = 0; i < pos.length; i++) for (var j = i + 1; j < pos.length; j++) if (pos[i] === pos[j]) return false;
+    return P.clues.every(function (c) { return C.holds(P.board, c, pos, P.crimeTile); });
+  }
+
+  // Count solutions (up to `limit`) by propagate-and-branch.
+  function count(P, limit) {
+    limit = limit || 2;
+    var found = 0, first = null;
+    (function rec(D) {
+      if (found >= limit) return;
+      if (!propagate(P, D, null)) return;
+      if (solved(D)) {
+        var pos = D.map(function (d) { return d[0]; });
+        if (valid(P, pos)) { if (!found) first = pos; found++; }
+        return;
+      }
+      var best = -1;
+      for (var k = 0; k < D.length; k++) if (D[k].length > 1 && (best < 0 || D[k].length < D[best].length)) best = k;
+      for (var i = 0; i < D[best].length && found < limit; i++) {
+        var E = copy(D); E[best] = [D[best][i]];
+        rec(E);
+      }
+    })(initial(P));
+    return { count: found, solution: first };
+  }
+
+  // How a person would get on. Returns { level: 'logic' | 'lookahead' | 'stuck', rounds, elims, looks, D }.
+  function grade(P, allowLookahead) {
+    var stats = { rounds: 0, elims: 0, looks: 0 };
+    var D = initial(P);
+    if (!propagate(P, D, stats)) return { level: 'broken', stats: stats };
+    if (solved(D)) return { level: 'logic', stats: stats, D: D };
+    if (!allowLookahead) return { level: 'stuck', stats: stats, D: D };
+    var progress = true;
+    while (progress && !solved(D)) {
+      progress = false;
+      for (var k = 0; k < P.n && !progress; k++) {
+        if (D[k].length < 2) continue;
+        for (var i = 0; i < D[k].length; i++) {
+          var E = copy(D); E[k] = [D[k][i]];
+          if (!propagate(P, E, null)) {
+            var bad = D[k][i];
+            D[k] = D[k].filter(function (t) { return t !== bad; });
+            stats.looks++;
+            if (!propagate(P, D, stats)) return { level: 'broken', stats: stats };
+            progress = true;
+            break;
+          }
+        }
+      }
+    }
+    return { level: solved(D) ? 'lookahead' : 'stuck', stats: stats, D: D };
+  }
+
+  PL.solver = { initial: initial, propagate: propagate, count: count, grade: grade, valid: valid, solved: solved, copy: copy };
+})(PL);
+
+// ---- src/gen.js
+// PORCHLIGHT: case generator. Pick a porch and a cast, hide the bugs, choose the crime so exactly one bug is
+// next to it, then add true clues (weighted for the tier) until the solver can finish by reasoning alone,
+// and finally strip every clue that isn't needed. Same seed, same case, on every device.
+(function (PL) {
+  'use strict';
+  var C = PL.clue, S = PL.solver;
+
+  // Tiers. weights: how often each clue type is offered (before pruning). lookahead: allow one-step "what if".
+  var TIERS = {
+    S: { name: 'Small', layouts: ['S'], bugs: [3, 4], lookahead: false, clues: [3, 7], minRounds: 2, caps: { pos: 0, nospot: 1 },
+      weights: { spot: 8, nospot: 3, light: 5, obj: 5, objany: 1, edge: 2, adj: 5, noadj: 2, same: 2, diff: 1, row: 0, col: 0, left: 0, above: 0, near: 1, alone: 1, count: 3, lit: 2 } },
+    M: { name: 'Medium', layouts: ['M'], bugs: [4, 5], lookahead: false, clues: [5, 9], minRounds: 3, caps: { pos: 1, nospot: 2 },
+      weights: { spot: 5, nospot: 3, light: 4, obj: 4, objany: 1, edge: 2, adj: 5, noadj: 3, same: 3, diff: 2, row: 1, col: 1, left: 1, above: 1, near: 2, alone: 2, count: 3, lit: 2 } },
+    L: { name: 'Large', layouts: ['L'], bugs: [5, 6], lookahead: false, clues: [6, 11], minRounds: 4, caps: { pos: 2, nospot: 2 },
+      weights: { spot: 3, nospot: 3, light: 3, obj: 4, objany: 1, edge: 2, adj: 5, noadj: 4, same: 3, diff: 3, row: 1, col: 1, left: 2, above: 2, near: 2, alone: 3, count: 3, lit: 2 } },
+    XL: { name: 'Huge', layouts: ['XL'], bugs: [6, 7], lookahead: true, maxLooks: 6, clues: [7, 13], minRounds: 4, caps: { pos: 2, nospot: 3 },
+      weights: { spot: 3, nospot: 3, light: 2, obj: 4, objany: 1, edge: 2, adj: 5, noadj: 4, same: 3, diff: 3, row: 1, col: 1, left: 2, above: 2, near: 2, alone: 3, count: 3, lit: 2 } }
+  };
+  // Objects a crime can happen at (must be the only one of its kind on the board).
+  var CRIME_OBJ = ['T', 'G', 'B', 'W', 'C', 'X', 'N', 'P'];
+
+  function kindOf(c) {
+    switch (c.t) {
+      case 'spot': return c.v ? 'spot' : 'nospot';
+      case 'adj': return c.v ? 'adj' : 'noadj';
+      case 'same': return c.v ? 'same' : 'diff';
+      case 'count': return c.k === 'lit' ? 'lit' : 'count';
+      default: return c.t;
+    }
+  }
+  // Caps group several kinds: the abstract row/column clues read worst, so each tier allows only a few.
+  function capOf(c) { var k = kindOf(c); return k === 'row' || k === 'col' || k === 'left' || k === 'above' ? 'pos' : k; }
+  function key(c) { return [c.t, c.a, c.b, c.s, c.o, c.v, c.k].join(','); }
+
+  function ruleClues(cast) {
+    var out = [];
+    cast.forEach(function (id, k) {
+      var r = PL.species(id).rule;
+      if (r) out.push({ t: r.t, a: k, v: r.v, rule: true });
+    });
+    return out;
+  }
+
+  // A random arrangement that satisfies the species rules.
+  function hide(board, n, rules, rng) {
+    var P = { board: board, n: n, clues: rules, crimeTile: -1 };
+    for (var tries = 0; tries < 300; tries++) {
+      var D = S.initial(P), used = {}, pos = [], ok = true;
+      for (var k = 0; k < n && ok; k++) {
+        var opts = D[k].filter(function (t) { return !used[t]; });
+        if (!opts.length) { ok = false; break; }
+        pos[k] = rng.pick(opts); used[pos[k]] = 1;
+      }
+      if (ok && S.valid(P, pos)) return pos;
+    }
+    return null;
+  }
+
+  // Every true clue about this arrangement, except ones a rule already states and ones about the crime object.
+  function candidates(board, pos, crimeObj, rules) {
+    var out = [], n = pos.length, tiles = board.tiles;
+    var objs = Object.keys(board.objCount).filter(function (o) { return o !== crimeObj; });
+    for (var a = 0; a < n; a++) {
+      var t = tiles[pos[a]];
+      board.spots.forEach(function (sp, s) { out.push({ t: 'spot', a: a, s: s, v: t.spot === s ? 1 : 0 }); });
+      out.push({ t: 'light', a: a, v: t.lit ? 1 : 0 });
+      objs.forEach(function (o) { out.push({ t: 'obj', a: a, o: o, v: t.nextObj[o] ? 1 : 0 }); });
+      out.push({ t: 'objany', a: a, v: Object.keys(t.nextObj).length ? 1 : 0 });
+      out.push({ t: 'edge', a: a, v: t.edge ? 1 : 0 });
+      var nb = 0, alone = true;
+      for (var b = 0; b < n; b++) {
+        if (b === a) continue;
+        var u = tiles[pos[b]];
+        if (t.n.indexOf(pos[b]) >= 0) nb++;
+        if (u.spot === t.spot) alone = false;
+        if (b > a) {
+          out.push({ t: 'adj', a: a, b: b, v: t.n.indexOf(pos[b]) >= 0 ? 1 : 0 });
+          out.push({ t: 'same', a: a, b: b, v: u.spot === t.spot ? 1 : 0 });
+          if (u.y === t.y) out.push({ t: 'row', a: a, b: b });
+          if (u.x === t.x) out.push({ t: 'col', a: a, b: b });
+        }
+        if (t.x < u.x) out.push({ t: 'left', a: a, b: b });
+        if (t.y < u.y) out.push({ t: 'above', a: a, b: b });
+      }
+      out.push({ t: 'near', a: a, v: nb ? 1 : 0 });
+      if (alone) out.push({ t: 'alone', a: a });
+    }
+    board.spots.forEach(function (sp, s) {
+      out.push({ t: 'count', k: 'spot', s: s, v: pos.filter(function (p) { return tiles[p].spot === s; }).length });
+    });
+    out.push({ t: 'count', k: 'lit', v: pos.filter(function (p) { return tiles[p].lit; }).length });
+    var have = {};
+    rules.forEach(function (r) { have[key(r)] = 1; });
+    return out.filter(function (c) { return !have[key(c)]; });
+  }
+
+  // Lookahead grading is the expensive part, so only run it once the case is known to be unique.
+  function solvable(P, tier) {
+    var g = S.grade(P, false);
+    if (g.level === 'logic') return g;
+    if (!tier.lookahead || S.count(P, 2).count !== 1) return null;
+    g = S.grade(P, true);
+    return g.level === 'lookahead' && g.stats.looks <= tier.maxLooks ? g : null;
+  }
+
+  // Why attempts were rejected (read by tools/balance.js).
+  var failures = {};
+  function fail(why) { failures[why] = (failures[why] || 0) + 1; }
+
+  // spec: { tier: 'S'|'M'|'L'|'XL', seed, pool: [species ids], must: [species ids], bugs?: n }
+  function generate(spec) {
+    var tier = TIERS[spec.tier], rng = new PL.RNG(spec.seed);
+    var layouts = PL.LAYOUTS.filter(function (l) { return tier.layouts.indexOf(l.tier) >= 0; });
+    for (var attempt = 0; attempt < 80; attempt++) {
+      var L = rng.pick(layouts), board = PL.buildBoard(L.id, rng.chance(0.5));
+      var n = spec.bugs || rng.int(tier.bugs[0], tier.bugs[1]);
+      var must = (spec.must || []).slice(), rest = rng.shuffle(spec.pool.filter(function (id) { return must.indexOf(id) < 0; }));
+      var cast = rng.shuffle(must.concat(rest).slice(0, n));
+      if (cast.length < n) n = cast.length;
+      var rules = ruleClues(cast);
+      var pos = hide(board, n, rules, rng);
+      if (!pos) { fail('hide'); continue; }
+      // The crime: an object that exactly one bug stands next to.
+      var crimeTile = -1;
+      var objTiles = rng.shuffle(board.tiles.filter(function (t) {
+        return t.obj && CRIME_OBJ.indexOf(t.obj) >= 0 && board.objCount[t.obj] === 1;
+      }));
+      for (var i = 0; i < objTiles.length; i++) {
+        var near = pos.filter(function (p) { return objTiles[i].n.indexOf(p) >= 0; }).length;
+        if (near === 1) { crimeTile = objTiles[i].i; break; }
+      }
+      if (crimeTile < 0) { fail('crime'); continue; }
+      var crimeObj = board.tiles[crimeTile].obj;
+      var culprit = pos.findIndex(function (p) { return board.tiles[crimeTile].n.indexOf(p) >= 0; });
+      var base = rules.concat([{ t: 'count', k: 'crime', v: 1, crime: true }]);
+      var order = rng.weightedOrder(candidates(board, pos, crimeObj, rules), function (c) { return tier.weights[kindOf(c)] || 0; });
+      var P = { board: board, n: n, clues: base, crimeTile: crimeTile };
+      // Add clues until solvable. Capped kinds are set aside, and used only if nothing else finishes the case
+      // (two tiles of one spot can be identical in every other respect).
+      var chosen = [], g = null, used = {}, skipped = [];
+      for (var ci = 0; ci < order.length && !g; ci++) {
+        var cap = capOf(order[ci]);
+        if (tier.caps[cap] !== undefined && (used[cap] || 0) >= tier.caps[cap]) { skipped.push(order[ci]); continue; }
+        used[cap] = (used[cap] || 0) + 1;
+        chosen.push(order[ci]);
+        P.clues = base.concat(chosen);
+        g = solvable(P, tier);
+      }
+      for (ci = 0; ci < skipped.length && !g; ci++) {
+        chosen.push(skipped[ci]);
+        P.clues = base.concat(chosen);
+        g = solvable(P, tier);
+      }
+      if (!g) { fail('unsolved'); continue; }
+      // Prune: drop each clue that the rest can do without.
+      var tryOrder = rng.shuffle(chosen.slice());
+      for (ci = 0; ci < tryOrder.length; ci++) {
+        var without = chosen.filter(function (c) { return c !== tryOrder[ci]; });
+        P.clues = base.concat(without);
+        var g2 = solvable(P, tier);
+        if (g2) { chosen = without; g = g2; }
+      }
+      P.clues = base.concat(chosen);
+      g = solvable(P, tier);
+      if (chosen.length < tier.clues[0] || chosen.length > tier.clues[1]) { fail('clues' + (chosen.length < tier.clues[0] ? '<' : '>')); continue; }
+      if (g.stats.rounds < tier.minRounds) { fail('easy'); continue; }
+      var check = S.count(P, 2);
+      if (check.count !== 1) throw new Error('generator produced a case with ' + check.count + ' solutions');
+      // Read order: facts about one bug, then bugs together, then counts.
+      var group = function (c) { return C.isUnary(c) ? 0 : c.t === 'count' ? 2 : 1; };
+      var shown = rng.shuffle(chosen.slice()).sort(function (x, y) { return group(x) - group(y); });
+      return {
+        seed: spec.seed >>> 0, tier: spec.tier, layout: L.id, mirror: board.mirror, board: board, n: n, cast: cast,
+        rules: rules, clues: shown, crimeClue: base[base.length - 1], crimeTile: crimeTile, crimeObj: crimeObj,
+        culprit: culprit, solution: pos, grade: { level: g.level, rounds: g.stats.rounds, elims: g.stats.elims, looks: g.stats.looks },
+        attempts: attempt + 1
+      };
+    }
+    throw new Error('no case for seed ' + spec.seed + ' tier ' + spec.tier);
+  }
+
+  // The full list the solver uses (rules, the crime, the clues).
+  function allClues(cs) { return cs.rules.concat([cs.crimeClue], cs.clues); }
+
+  PL.TIERS = TIERS;
+  PL.genFailures = failures;
+  PL.generate = generate;
+  PL.allClues = allClues;
+})(PL);
+
+// ---- src/cases.js
+// PORCHLIGHT: where cases come from. Case Files (the campaign), Tonight's Case (the daily) and Late Shift
+// (endless, shareable as dare codes). Each is a spec handed to PL.generate; nothing here touches the DOM.
+(function (PL) {
+  'use strict';
+
+  // Crimes happen at an object; the question names what happened to it.
+  var CRIMES = {
+    T: ['Who nibbled the jam tart?', 'Who licked every spoon on the tea table?', 'Who took one bite out of every biscuit?'],
+    G: ['Who drew a moustache on the gnome?', 'Who stole the gnome\'s tiny fishing rod?', 'Who turned the gnome to face the wall?'],
+    B: ['Who filled the wellies with pebbles?', 'Who moved into the left welly?', 'Who tied the welly laces together?'],
+    W: ['Who drank the watering can dry?', 'Who blew bubbles in the watering can?'],
+    C: ['Who unravelled the rocking chair\'s cushion?', 'Who set the rocking chair rocking at 3am?'],
+    N: ['Who fogged up the lantern glass?', 'Who left nose prints all over the lantern?'],
+    P: ['Who bit the geranium?', 'Who dug up the bulbs in the flowerpot?'],
+    X: ['Who opened the parcel?', 'Who popped all the bubble wrap in the parcel?']
+  };
+  function crimeText(cs) {
+    var opts = CRIMES[cs.crimeObj] || ['Who did it?'];
+    return opts[cs.seed % opts.length];
+  }
+
+  // ---------------------------------------------------------------- Case Files
+  // [tier, bugs, newly introduced species]
+  var NIGHTS = [
+    ['S', 3], ['S', 3], ['S', 3], ['S', 4, 'moth'], ['M', 4], ['M', 4], ['M', 4, 'firefly'], ['M', 5], ['M', 5], ['M', 5, 'spider'],
+    ['L', 5], ['M', 5], ['L', 5], ['L', 5, 'snail'], ['L', 6], ['M', 5], ['L', 6], ['L', 5, 'ant'], ['L', 6], ['XL', 6],
+    ['L', 6], ['L', 6, 'cricket'], ['XL', 6], ['L', 6], ['XL', 6], ['XL', 7], ['L', 6], ['XL', 7], ['XL', 7], ['XL', 7]
+  ];
+  function unlockedBy(night) {
+    return PL.SPECIES.filter(function (s) { return s.unlock <= night; }).map(function (s) { return s.id; });
+  }
+  function nightSpec(night) {
+    var N = NIGHTS[night - 1];
+    return { tier: N[0], bugs: N[1], seed: PL.hashString('porchlight/night/' + night), pool: unlockedBy(night), must: N[2] ? [N[2]] : [] };
+  }
+  function nightCase(night) {
+    var cs = PL.generate(nightSpec(night));
+    cs.mode = 'night'; cs.night = night; cs.newSpecies = NIGHTS[night - 1][2] || null;
+    cs.title = 'Night ' + night; cs.crime = crimeText(cs);
+    return cs;
+  }
+
+  // ---------------------------------------------------------------- Tonight's Case
+  // Small on Monday, Huge at the weekend, the same for everyone on the same date.
+  var WEEK = ['XL', 'S', 'M', 'M', 'L', 'L', 'XL']; // Sun..Sat
+  var LAUNCH = '2026-10-19';
+  function dailyNumber(key) { return PL.dayNumber(key) - PL.dayNumber(LAUNCH) + 1; }
+  function dailyCase(key) {
+    var cs = PL.generate({ tier: WEEK[PL.weekday(key)], seed: PL.hashString('porchlight/daily/' + key), pool: unlockedBy(99) });
+    cs.mode = 'daily'; cs.day = key; cs.number = dailyNumber(key);
+    cs.title = 'Tonight\'s Case #' + cs.number; cs.crime = crimeText(cs);
+    return cs;
+  }
+
+  // ---------------------------------------------------------------- Late Shift and dare codes
+  // A code names the tier, how many species are in the pool (they unlock in a fixed order) and the seed,
+  // plus optionally the sender's time in seconds: "L9-3k2j1x" or "L9-3k2j1x~95".
+  function lateCase(tier, poolSize, seed) {
+    var pool = PL.SPECIES.slice(0, poolSize).map(function (s) { return s.id; });
+    var cs = PL.generate({ tier: tier, seed: seed >>> 0, pool: pool });
+    cs.mode = 'late'; cs.poolSize = poolSize;
+    cs.title = PL.TIERS[tier].name + ' case'; cs.crime = crimeText(cs);
+    cs.code = encode(tier, poolSize, seed);
+    return cs;
+  }
+  function encode(tier, poolSize, seed, time) {
+    return tier + poolSize + '-' + (seed >>> 0).toString(36) + (time ? '~' + Math.round(time) : '');
+  }
+  function decode(code) {
+    var m = /^(S|M|L|XL)([3-9])-([0-9a-z]{1,7})(?:~(\d{1,5}))?$/.exec(String(code || '').trim());
+    if (!m) return null;
+    var seed = parseInt(m[3], 36);
+    if (!(seed >= 0 && seed <= 0xFFFFFFFF)) return null;
+    return { tier: m[1], poolSize: +m[2], seed: seed, time: m[4] ? +m[4] : null };
+  }
+
+  // Stars: solved with no hints ★★★, one hint ★★, more ★. Wrong accusations don't cost stars, they cost pride.
+  function stars(hints) { return hints === 0 ? 3 : hints === 1 ? 2 : 1; }
+
+  PL.CRIMES = CRIMES;
+  PL.NIGHTS = NIGHTS;
+  PL.cases = { nightSpec: nightSpec, night: nightCase, daily: dailyCase, dailyNumber: dailyNumber, late: lateCase,
+    encode: encode, decode: decode, unlockedBy: unlockedBy, stars: stars, crimeText: crimeText };
+})(PL);
+
+// ---- src/audio.js
+// PORCHLIGHT: procedural audio. No sample files. A quiet night (distant crickets, a lamp hum), wooden
+// "tok"s when bugs land on the boards, small bells as clues come true, and a soft sting for the reveal.
+(function (PL) {
+  'use strict';
+
+  var A = PL.Audio = { ctx: null, master: null, sfx: null, amb: null, reverb: null, ready: false, on: true, _amb: null };
+  var PENTA = [0, 2, 4, 7, 9];
+  function note(base, step) {
+    var oct = Math.floor(step / 5), deg = PENTA[((step % 5) + 5) % 5];
+    return base * Math.pow(2, oct + deg / 12);
+  }
+  function impulse(ctx, secs, decay) {
+    var rate = ctx.sampleRate, len = Math.floor(rate * secs), buf = ctx.createBuffer(2, len, rate);
+    for (var ch = 0; ch < 2; ch++) {
+      var d = buf.getChannelData(ch);
+      for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+    return buf;
+  }
+
+  A.init = function () {
+    if (A.ctx) { if (A.ctx.state === 'suspended') A.ctx.resume(); return; }
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    var ctx = A.ctx = new AC();
+    var comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -16; comp.ratio.value = 4;
+    A.master = ctx.createGain(); A.master.gain.value = A.on ? 0.9 : 0;
+    A.master.connect(comp); comp.connect(ctx.destination);
+    A.sfx = ctx.createGain(); A.sfx.gain.value = 0.8; A.sfx.connect(A.master);
+    A.amb = ctx.createGain(); A.amb.gain.value = 0.5; A.amb.connect(A.master);
+    A.reverb = ctx.createConvolver(); A.reverb.buffer = impulse(ctx, 2.6, 2.6);
+    var wet = ctx.createGain(); wet.gain.value = 0.3; A.reverb.connect(wet); wet.connect(A.master);
+    A.ready = true;
+    if (A._wantAmb) A.ambience(true);
+  };
+  A.setOn = function (on) {
+    A.on = on;
+    if (A.ready) A.master.gain.setTargetAtTime(on ? 0.9 : 0, A.ctx.currentTime, 0.05);
+  };
+
+  function tone(type, freq, t, dur, gain, o) {
+    o = o || {};
+    var ctx = A.ctx, osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = type; osc.frequency.setValueAtTime(freq, t);
+    if (o.to) osc.frequency.exponentialRampToValueAtTime(o.to, t + (o.glide || dur));
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + (o.attack || 0.004));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(g);
+    var out = g;
+    if (o.lp) { var f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; g.connect(f); out = f; }
+    out.connect(o.bus || A.sfx);
+    if (o.wet) out.connect(A.reverb);
+    osc.start(t); osc.stop(t + dur + 0.05);
+  }
+  function bell(freq, t, dur, gain) {
+    var ctx = A.ctx, car = ctx.createOscillator(), mod = ctx.createOscillator(), mg = ctx.createGain(), g = ctx.createGain();
+    car.frequency.value = freq; mod.frequency.value = freq * 3.5;
+    mg.gain.setValueAtTime(freq * 1.6, t); mg.gain.exponentialRampToValueAtTime(1, t + dur);
+    mod.connect(mg); mg.connect(car.frequency);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    car.connect(g); g.connect(A.sfx); g.connect(A.reverb);
+    car.start(t); mod.start(t); car.stop(t + dur + 0.05); mod.stop(t + dur + 0.05);
+  }
+  function noise(t, dur, gain, freq, q) {
+    var ctx = A.ctx, len = Math.floor(ctx.sampleRate * dur), buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    var src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = buf; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q || 1.2; g.gain.value = gain;
+    src.connect(f); f.connect(g); g.connect(A.sfx); src.start(t);
+  }
+  function now() { return A.ctx.currentTime + 0.005; }
+  function ok() { return A.ready && A.on; }
+
+  A.pick = function () { if (!ok()) return; var t = now(); tone('triangle', 900, t, 0.06, 0.12, { to: 1300 }); };
+  // A wooden "tok", pitched per bug so each suspect sounds like itself.
+  A.drop = function (k) {
+    if (!ok()) return; var t = now(), f = note(196, k + 2);
+    tone('sine', f * 2, t, 0.12, 0.3, { to: f, glide: 0.05 });
+    noise(t, 0.05, 0.25, 1800, 2);
+  };
+  A.unplace = function () { if (!ok()) return; var t = now(); tone('sine', 520, t, 0.1, 0.12, { to: 300 }); };
+  A.mark = function () { if (!ok()) return; noise(now(), 0.04, 0.2, 3200, 3); };
+  A.clueTrue = function (count) { if (!ok()) return; bell(note(523, Math.min(12, count)), now(), 0.9, 0.08); };
+  A.clueBroken = function () { if (!ok()) return; var t = now(); tone('sine', 180, t, 0.18, 0.18, { to: 120 }); };
+  A.allFit = function () {
+    if (!ok()) return; var t = now();
+    [0, 2, 4, 5, 7].forEach(function (s, i) { bell(note(523, s), t + i * 0.08, 1.2, 0.09); });
+  };
+  A.wrong = function () {
+    if (!ok()) return; var t = now();
+    tone('square', 160, t, 0.16, 0.08, { to: 110, lp: 900 }); tone('square', 120, t + 0.12, 0.22, 0.08, { to: 80, lp: 700 });
+  };
+  A.hint = function () { if (!ok()) return; var t = now(); [7, 9, 12].forEach(function (s, i) { bell(note(523, s), t + i * 0.06, 0.7, 0.05); }); };
+  A.reveal = function () {
+    if (!ok()) return; var t = now();
+    tone('sawtooth', 110, t, 1.4, 0.06, { lp: 600, wet: 1 });
+    tone('sawtooth', 164.8, t, 1.4, 0.05, { lp: 600, wet: 1 });
+    [0, 4, 7, 9, 12].forEach(function (s, i) { bell(note(392, s), t + 0.55 + i * 0.11, 1.6, 0.08); });
+  };
+  A.click = function () { if (!ok()) return; tone('triangle', 660, now(), 0.05, 0.06); };
+
+  // Night ambience: a lamp hum and crickets chirping in irregular bursts.
+  A.ambience = function (on) {
+    A._wantAmb = on;
+    if (!A.ready) return;
+    if (!on) {
+      if (A._amb) { clearInterval(A._amb.timer); A._amb.hum.stop(); A._amb = null; }
+      return;
+    }
+    if (A._amb) return;
+    var ctx = A.ctx, hum = ctx.createOscillator(), hg = ctx.createGain(), hf = ctx.createBiquadFilter();
+    hum.type = 'sawtooth'; hum.frequency.value = 60; hf.type = 'lowpass'; hf.frequency.value = 200; hg.gain.value = 0.012;
+    hum.connect(hf); hf.connect(hg); hg.connect(A.amb); hum.start();
+    var timer = setInterval(function () {
+      if (!ok() || Math.random() < 0.45) return;
+      var t = now() + Math.random() * 0.5, f = 3800 + Math.random() * 900, n = 2 + (Math.random() * 3 | 0);
+      for (var i = 0; i < n; i++) tone('sine', f, t + i * 0.07, 0.04, 0.012 + Math.random() * 0.01, { bus: A.amb });
+    }, 700);
+    A._amb = { hum: hum, timer: timer };
+  };
+})(PL);
+
+// ---- src/render.js
+// PORCHLIGHT: canvas renderer. The porch (wall, floor, furniture, light) is painted once per case into an
+// offscreen layer; each frame adds bugs, the tray, marks, highlights and the reveal. Art is all vector code.
+(function (PL) {
+  'use strict';
+
+  var R = PL.Render = {
+    canvas: null, ctx: null, dpr: 1, w: 0, h: 0, cs: null, layer: null,
+    ts: 40, ox: 0, oy: 0, wallH: 0, tray: null, icons: {}
+  };
+  var INK = '#0E0B1F', AMBER = '#FFB547', CREAM = '#F6E7C8', CORAL = '#FF5E6C', GREEN = '#7FD7A0';
+
+  function h2(x, y, s) {
+    var h = Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263) + Math.imul(s | 0, 1442695041);
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+  function rr(c, x, y, w, h, r) {
+    c.beginPath();
+    c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+  }
+  function ell(c, x, y, rx, ry, rot) { c.beginPath(); c.ellipse(x, y, Math.max(0.1, rx), Math.max(0.1, ry), rot || 0, 0, Math.PI * 2); }
+
+  R.init = function (canvas) {
+    R.canvas = canvas; R.ctx = canvas.getContext('2d');
+  };
+  R.resize = function (w, h) {
+    R.dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    R.w = Math.max(1, Math.floor(w)); R.h = Math.max(1, Math.floor(h));
+    R.canvas.width = Math.round(R.w * R.dpr); R.canvas.height = Math.round(R.h * R.dpr);
+    R.canvas.style.width = R.w + 'px'; R.canvas.style.height = R.h + 'px';
+    if (R.cs) R.layout();
+  };
+
+  // ---------------------------------------------------------------- geometry
+  R.setCase = function (cs) { R.cs = cs; R.layout(); };
+  R.layout = function () {
+    var cs = R.cs, b = cs.board, pad = Math.max(10, Math.min(R.w, R.h) * 0.03);
+    var ts = 40;
+    for (var it = 0; it < 3; it++) {
+      var slot = Math.min(ts * 0.92, (R.w - 2 * pad) / cs.n);
+      var trayH = slot * 1.32 + 10;
+      ts = Math.min((R.w - 2 * pad) / b.W, (R.h - 2 * pad - trayH - 8) / (b.H + 0.95), 92);
+    }
+    ts = Math.max(8, Math.floor(ts));
+    R.ts = ts; R.wallH = Math.round(ts * 0.95);
+    var slotW = Math.max(8, Math.floor(Math.min(ts * 0.92, (R.w - 2 * pad) / cs.n)));
+    var boardW = ts * b.W, boardH = ts * b.H, trayH = Math.round(slotW * 1.32 + 10);
+    var total = R.wallH + boardH + 8 + trayH;
+    R.ox = Math.round((R.w - boardW) / 2);
+    R.oy = Math.round(Math.max(pad, (R.h - total) / 2) + R.wallH);
+    var trayW = slotW * cs.n;
+    R.tray = { x: Math.round((R.w - trayW) / 2), y: R.oy + boardH + 8, w: trayW, h: trayH, slot: slotW };
+    R.paintLayer();
+  };
+  R.tileRect = function (i) {
+    var b = R.cs.board, x = i % b.W, y = (i / b.W) | 0;
+    return { x: R.ox + x * R.ts, y: R.oy + y * R.ts, w: R.ts, h: R.ts, cx: R.ox + (x + 0.5) * R.ts, cy: R.oy + (y + 0.5) * R.ts };
+  };
+  R.slotCenter = function (k) {
+    var t = R.tray;
+    return { x: t.x + (k + 0.5) * t.slot, y: t.y + t.slot * 0.52 };
+  };
+  R.hit = function (x, y) {
+    var b = R.cs.board, t = R.tray;
+    var tx = Math.floor((x - R.ox) / R.ts), ty = Math.floor((y - R.oy) / R.ts);
+    if (tx >= 0 && ty >= 0 && tx < b.W && ty < b.H) return { kind: 'tile', i: ty * b.W + tx };
+    if (x >= t.x - 6 && x <= t.x + t.w + 6 && y >= t.y - 6 && y <= t.y + t.h + 6) {
+      return { kind: 'tray', k: PL.clamp(Math.floor((x - t.x) / t.slot), 0, R.cs.n - 1) };
+    }
+    if (y > R.oy + b.H * R.ts) return { kind: 'tray', k: -1 };
+    return null;
+  };
+
+  // ---------------------------------------------------------------- static porch layer
+  var FLOOR = {
+    boards: '#6A4A3C', doormat: '#9A6A3A', rug: '#8E2E48', steps: '#6E6A7C',
+    flowerbed: '#4A3428', lawn: '#3C7046', path: '#857C92', gravel: '#77705F'
+  };
+  function paintFloor(c, kind, x, y, s, seed) {
+    c.fillStyle = FLOOR[kind]; c.fillRect(x, y, s, s);
+    var i, r;
+    c.save(); c.beginPath(); c.rect(x, y, s, s); c.clip();
+    switch (kind) {
+      case 'boards':
+        c.strokeStyle = 'rgba(0,0,0,0.28)'; c.lineWidth = Math.max(1, s * 0.025);
+        for (i = 1; i < 4; i++) { c.beginPath(); c.moveTo(x + i * s / 4, y); c.lineTo(x + i * s / 4, y + s); c.stroke(); }
+        c.fillStyle = 'rgba(255,220,180,0.05)';
+        for (i = 0; i < 4; i++) if (h2(seed, i, 3) > 0.5) c.fillRect(x + i * s / 4 + 2, y, s / 4 - 4, s);
+        c.fillStyle = 'rgba(0,0,0,0.35)';
+        for (i = 0; i < 4; i++) { r = h2(seed, i, 9); c.beginPath(); c.arc(x + (i + 0.5) * s / 4, y + r * s, s * 0.018, 0, 7); c.fill(); }
+        break;
+      case 'doormat':
+        c.strokeStyle = 'rgba(60,30,10,0.35)'; c.lineWidth = Math.max(1, s * 0.02);
+        for (i = 0; i < 14; i++) { c.beginPath(); c.moveTo(x + i * s / 7, y); c.lineTo(x + i * s / 7 - s / 3, y + s); c.stroke(); }
+        break;
+      case 'rug':
+        c.strokeStyle = 'rgba(255,205,120,0.35)'; c.lineWidth = Math.max(1, s * 0.03);
+        c.beginPath(); c.moveTo(x + s / 2, y + s * 0.12); c.lineTo(x + s * 0.88, y + s / 2); c.lineTo(x + s / 2, y + s * 0.88); c.lineTo(x + s * 0.12, y + s / 2); c.closePath(); c.stroke();
+        c.fillStyle = 'rgba(30,40,90,0.55)';
+        c.beginPath(); c.moveTo(x + s / 2, y + s * 0.32); c.lineTo(x + s * 0.68, y + s / 2); c.lineTo(x + s / 2, y + s * 0.68); c.lineTo(x + s * 0.32, y + s / 2); c.closePath(); c.fill();
+        break;
+      case 'steps':
+        c.fillStyle = 'rgba(0,0,0,0.22)'; c.fillRect(x, y + s * 0.78, s, s * 0.22);
+        c.fillStyle = 'rgba(255,255,255,0.08)'; c.fillRect(x, y, s, s * 0.08);
+        for (i = 0; i < 5; i++) { c.fillStyle = 'rgba(0,0,0,0.12)'; c.beginPath(); c.arc(x + h2(seed, i, 1) * s, y + h2(seed, i, 2) * s * 0.7, s * 0.03, 0, 7); c.fill(); }
+        break;
+      case 'flowerbed':
+        for (i = 0; i < 7; i++) {
+          var fx = x + h2(seed, i, 1) * s, fy = y + h2(seed, i, 2) * s, col = ['#FF86D6', '#FFE45E', '#A9C4FF', '#FFFFFF'][(h2(seed, i, 3) * 4) | 0];
+          c.strokeStyle = '#2F6B3A'; c.lineWidth = Math.max(1, s * 0.03);
+          c.beginPath(); c.moveTo(fx, fy); c.lineTo(fx, fy + s * 0.14); c.stroke();
+          c.fillStyle = col;
+          for (var p = 0; p < 5; p++) { c.beginPath(); c.arc(fx + Math.cos(p * 1.256) * s * 0.035, fy + Math.sin(p * 1.256) * s * 0.035, s * 0.03, 0, 7); c.fill(); }
+        }
+        break;
+      case 'lawn':
+        c.strokeStyle = 'rgba(140,220,120,0.35)'; c.lineWidth = Math.max(1, s * 0.022);
+        for (i = 0; i < 16; i++) {
+          var gx = x + h2(seed, i, 1) * s, gy = y + h2(seed, i, 2) * s;
+          c.beginPath(); c.moveTo(gx, gy); c.lineTo(gx + (h2(seed, i, 3) - 0.5) * s * 0.08, gy - s * 0.1); c.stroke();
+        }
+        break;
+      case 'path':
+        c.strokeStyle = 'rgba(30,25,45,0.45)'; c.lineWidth = Math.max(1, s * 0.03);
+        rr(c, x + s * 0.06, y + s * 0.06, s * 0.52, s * 0.4, s * 0.08); c.stroke();
+        rr(c, x + s * 0.62, y + s * 0.06, s * 0.32, s * 0.4, s * 0.08); c.stroke();
+        rr(c, x + s * 0.06, y + s * 0.52, s * 0.34, s * 0.42, s * 0.08); c.stroke();
+        rr(c, x + s * 0.44, y + s * 0.52, s * 0.5, s * 0.42, s * 0.08); c.stroke();
+        break;
+      case 'gravel':
+        for (i = 0; i < 22; i++) {
+          c.fillStyle = h2(seed, i, 4) > 0.5 ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.22)';
+          c.beginPath(); c.arc(x + h2(seed, i, 1) * s, y + h2(seed, i, 2) * s, s * (0.02 + h2(seed, i, 3) * 0.03), 0, 7); c.fill();
+        }
+        break;
+    }
+    c.restore();
+  }
+
+  // Furniture. Drawn centred in a tile of size s.
+  R.drawObject = function (c, o, cx, cy, s, lit) {
+    var u = s / 100;
+    c.save(); c.translate(cx, cy);
+    // contact shadow
+    c.fillStyle = 'rgba(0,0,0,0.35)'; ell(c, 0, 30 * u, 34 * u, 10 * u); c.fill();
+    switch (o) {
+      case 'P': // flowerpot with geranium
+        c.fillStyle = '#C8643C'; c.beginPath(); c.moveTo(-24 * u, -2 * u); c.lineTo(24 * u, -2 * u); c.lineTo(17 * u, 32 * u); c.lineTo(-17 * u, 32 * u); c.closePath(); c.fill();
+        c.fillStyle = '#E07A4E'; rr(c, -28 * u, -10 * u, 56 * u, 12 * u, 3 * u); c.fill();
+        c.fillStyle = '#2F7A3E';
+        [[-14, -20, 12], [12, -22, 13], [0, -30, 12]].forEach(function (l) { ell(c, l[0] * u, l[1] * u, l[2] * u, l[2] * 0.8 * u); c.fill(); });
+        c.fillStyle = '#FF5E7A';
+        [[-8, -36], [8, -38], [0, -44], [-2, -32]].forEach(function (f) { c.beginPath(); c.arc(f[0] * u, f[1] * u, 7 * u, 0, 7); c.fill(); });
+        break;
+      case 'T': // tea table with jam tart
+        c.fillStyle = '#5A3A2C'; c.fillRect(-26 * u, 4 * u, 6 * u, 26 * u); c.fillRect(20 * u, 4 * u, 6 * u, 26 * u);
+        c.fillStyle = '#8A5A40'; ell(c, 0, 0, 40 * u, 18 * u); c.fill();
+        c.fillStyle = '#F6E7C8'; ell(c, 0, -2 * u, 32 * u, 13 * u); c.fill();
+        c.fillStyle = '#D9A15A'; ell(c, -4 * u, -6 * u, 15 * u, 8 * u); c.fill();
+        c.fillStyle = '#C2283F'; ell(c, -4 * u, -7 * u, 10 * u, 5 * u); c.fill();
+        c.fillStyle = '#FFFFFF'; ell(c, 18 * u, -4 * u, 7 * u, 5 * u); c.fill(); // cup
+        c.fillStyle = '#7A4A2A'; ell(c, 18 * u, -5 * u, 5 * u, 3 * u); c.fill();
+        break;
+      case 'G': // garden gnome
+        c.fillStyle = '#3A6BD6'; c.beginPath(); c.moveTo(-18 * u, 30 * u); c.lineTo(18 * u, 30 * u); c.lineTo(14 * u, 0); c.lineTo(-14 * u, 0); c.closePath(); c.fill();
+        c.fillStyle = '#F6E7C8'; c.beginPath(); c.moveTo(-12 * u, -2 * u); c.quadraticCurveTo(0, 26 * u, 12 * u, -2 * u); c.closePath(); c.fill();
+        c.fillStyle = '#F2B48A'; c.beginPath(); c.arc(0, -8 * u, 10 * u, 0, 7); c.fill();
+        c.fillStyle = '#D93A3A'; c.beginPath(); c.moveTo(-13 * u, -12 * u); c.lineTo(13 * u, -12 * u); c.lineTo(4 * u, -46 * u); c.closePath(); c.fill();
+        c.fillStyle = '#C2685A'; c.beginPath(); c.arc(0, -6 * u, 3.5 * u, 0, 7); c.fill();
+        break;
+      case 'B': // wellies
+        c.fillStyle = '#E0B23A';
+        [-11, 11].forEach(function (dx) {
+          rr(c, (dx - 9) * u, -26 * u, 18 * u, 46 * u, 6 * u); c.fill();
+          rr(c, (dx - 9) * u, 12 * u, 24 * u * (dx < 0 ? 1 : 1), 14 * u, 6 * u); c.fill();
+        });
+        c.fillStyle = 'rgba(0,0,0,0.25)'; [-11, 11].forEach(function (dx) { ell(c, dx * u, -26 * u, 9 * u, 3.5 * u); c.fill(); });
+        break;
+      case 'W': // watering can
+        c.fillStyle = '#4FA88A'; rr(c, -22 * u, -14 * u, 36 * u, 40 * u, 7 * u); c.fill();
+        c.strokeStyle = '#4FA88A'; c.lineWidth = 7 * u; c.lineCap = 'round';
+        c.beginPath(); c.moveTo(12 * u, 6 * u); c.lineTo(34 * u, -18 * u); c.stroke();
+        c.beginPath(); c.arc(-4 * u, -16 * u, 13 * u, Math.PI, 0); c.stroke();
+        c.fillStyle = '#3C8A70'; ell(c, 36 * u, -20 * u, 6 * u, 4 * u, -0.7); c.fill();
+        break;
+      case 'C': // rocking chair, side view: rockers, seat, slatted back, cushion
+        c.strokeStyle = '#3A2418'; c.lineCap = 'round';
+        c.lineWidth = 6 * u; c.beginPath(); c.moveTo(-34 * u, 22 * u); c.quadraticCurveTo(0, 40 * u, 34 * u, 20 * u); c.stroke();
+        c.lineWidth = 5 * u;
+        c.beginPath(); c.moveTo(-20 * u, 28 * u); c.lineTo(-18 * u, 2 * u); c.stroke();
+        c.beginPath(); c.moveTo(20 * u, 28 * u); c.lineTo(18 * u, 2 * u); c.stroke();
+        c.fillStyle = '#8F5E42'; rr(c, -26 * u, -4 * u, 50 * u, 9 * u, 3 * u); c.fill();
+        c.fillStyle = '#7A4E36'; c.save(); c.translate(-22 * u, -4 * u); c.rotate(-0.22);
+        rr(c, -5 * u, -46 * u, 10 * u, 48 * u, 3 * u); c.fill(); c.restore();
+        c.strokeStyle = '#7A4E36'; c.lineWidth = 3 * u;
+        for (var sl = 0; sl < 3; sl++) { c.beginPath(); c.moveTo((-20 + sl * 3) * u, (-10 - sl * 11) * u); c.lineTo((-4 + sl * 3) * u, (-10 - sl * 11) * u); c.stroke(); }
+        c.fillStyle = '#C24A6A'; rr(c, -22 * u, -12 * u, 40 * u, 10 * u, 5 * u); c.fill();
+        c.strokeStyle = '#7A4E36'; c.lineWidth = 4 * u; c.beginPath(); c.moveTo(18 * u, -2 * u); c.lineTo(22 * u, -16 * u); c.lineTo(6 * u, -16 * u); c.stroke();
+        break;
+      case 'X': // parcel
+        c.fillStyle = '#B88A56'; rr(c, -26 * u, -22 * u, 52 * u, 48 * u, 4 * u); c.fill();
+        c.fillStyle = '#E8D3A8'; c.fillRect(-4 * u, -22 * u, 8 * u, 48 * u); c.fillRect(-26 * u, -2 * u, 52 * u, 8 * u);
+        break;
+      case 'N': // lantern
+        c.fillStyle = '#2B2238'; rr(c, -14 * u, -30 * u, 28 * u, 8 * u, 3 * u); c.fill(); rr(c, -16 * u, 18 * u, 32 * u, 10 * u, 3 * u); c.fill();
+        c.fillStyle = '#FFD27A'; rr(c, -12 * u, -22 * u, 24 * u, 40 * u, 4 * u); c.fill();
+        c.fillStyle = '#FFF4D0'; ell(c, 0, -2 * u, 6 * u, 10 * u); c.fill();
+        c.strokeStyle = '#2B2238'; c.lineWidth = 3 * u; c.beginPath(); c.arc(0, -32 * u, 9 * u, Math.PI, 0); c.stroke();
+        break;
+    }
+    c.restore();
+  };
+
+  function spotAnchor(b, sp) {
+    // Label goes on the spot's tile nearest its centroid, preferring tiles without neighbours of other spots below.
+    var sx = 0, sy = 0;
+    sp.tiles.forEach(function (i) { sx += b.tiles[i].x; sy += b.tiles[i].y; });
+    sx /= sp.tiles.length; sy /= sp.tiles.length;
+    var best = sp.tiles[0], bd = 1e9;
+    sp.tiles.forEach(function (i) { var t = b.tiles[i], d = (t.x - sx) * (t.x - sx) + (t.y - sy) * (t.y - sy); if (d < bd) { bd = d; best = i; } });
+    return best;
+  }
+
+  R.paintLayer = function () {
+    var cs = R.cs, b = cs.board, ts = R.ts, dpr = R.dpr;
+    var L = R.layer || (R.layer = document.createElement('canvas'));
+    L.width = R.canvas.width; L.height = R.canvas.height;
+    var c = L.getContext('2d');
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, R.w, R.h);
+    var bx = R.ox, by = R.oy, bw = b.W * ts, bh = b.H * ts;
+    // wall
+    var wy = by - R.wallH;
+    c.fillStyle = '#2A2140'; c.fillRect(bx - 6, wy, bw + 12, R.wallH);
+    c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1;
+    for (var k = 1; k < 5; k++) { c.beginPath(); c.moveTo(bx - 6, wy + k * R.wallH / 5); c.lineTo(bx + bw + 6, wy + k * R.wallH / 5); c.stroke(); }
+    if (b.door) {
+      var dx0 = bx + b.door[0] * ts + ts * 0.12, dw = (b.door[1] - b.door[0] + 1) * ts - ts * 0.24;
+      c.fillStyle = '#1A1428'; rr(c, dx0 - 4, wy + R.wallH * 0.06, dw + 8, R.wallH * 0.94 + 2, 4); c.fill();
+      c.fillStyle = '#5B3A6E'; rr(c, dx0, wy + R.wallH * 0.12, dw, R.wallH * 0.88 + 2, 3); c.fill();
+      c.fillStyle = 'rgba(255,255,255,0.08)';
+      rr(c, dx0 + dw * 0.12, wy + R.wallH * 0.22, dw * 0.32, R.wallH * 0.62, 2); c.fill();
+      rr(c, dx0 + dw * 0.56, wy + R.wallH * 0.22, dw * 0.32, R.wallH * 0.62, 2); c.fill();
+      c.fillStyle = AMBER; c.beginPath(); c.arc(dx0 + dw * 0.9, wy + R.wallH * 0.62, Math.max(2, ts * 0.04), 0, 7); c.fill();
+    }
+    // a window on the wall, away from the door and lamp
+    var lampX = bx + (b.lights[0].x / 2) * ts;
+    var winCol = -1;
+    for (var wx = 0; wx < b.W; wx++) {
+      var cx0 = bx + (wx + 0.5) * ts;
+      if (b.door && wx >= b.door[0] - 0 && wx <= b.door[1]) continue;
+      if (Math.abs(cx0 - lampX) < ts * 0.9) continue;
+      if (winCol < 0 || Math.abs(wx - b.W / 2) > Math.abs(winCol - b.W / 2)) winCol = wx;
+    }
+    if (winCol >= 0) {
+      var wx0 = bx + winCol * ts + ts * 0.15, ww = ts * 0.7;
+      c.fillStyle = '#1A1428'; rr(c, wx0 - 3, wy + R.wallH * 0.14, ww + 6, R.wallH * 0.66, 3); c.fill();
+      var wg = c.createLinearGradient(0, wy, 0, wy + R.wallH);
+      wg.addColorStop(0, '#FFCE7A'); wg.addColorStop(1, '#C9773C');
+      c.fillStyle = wg; c.fillRect(wx0, wy + R.wallH * 0.18, ww, R.wallH * 0.58);
+      c.fillStyle = '#1A1428'; c.fillRect(wx0 + ww / 2 - 1.5, wy + R.wallH * 0.18, 3, R.wallH * 0.58); c.fillRect(wx0, wy + R.wallH * 0.45, ww, 3);
+    }
+    // floor
+    b.tiles.forEach(function (t) {
+      var x = bx + t.x * ts, y = by + t.y * ts;
+      if (t.spot >= 0) paintFloor(c, b.spots[t.spot].kind, x, y, ts, t.i * 31 + 7);
+      else {
+        // furniture stands on whatever is around it: use the most common neighbouring floor
+        var kinds = {};
+        t.n.forEach(function (j) { var u = b.tiles[j]; if (u.spot >= 0) kinds[b.spots[u.spot].kind] = (kinds[b.spots[u.spot].kind] || 0) + 1; });
+        var kind = Object.keys(kinds).sort(function (p, q) { return kinds[q] - kinds[p]; })[0] || 'boards';
+        paintFloor(c, kind, x, y, ts, t.i * 31 + 7);
+      }
+    });
+    // faint tile grid
+    c.strokeStyle = 'rgba(0,0,0,0.18)'; c.lineWidth = 1;
+    for (var gx = 1; gx < b.W; gx++) { c.beginPath(); c.moveTo(bx + gx * ts, by); c.lineTo(bx + gx * ts, by + bh); c.stroke(); }
+    for (var gy = 1; gy < b.H; gy++) { c.beginPath(); c.moveTo(bx, by + gy * ts); c.lineTo(bx + bw, by + gy * ts); c.stroke(); }
+    // darkness and light (tile-exact, so "in the light" is never ambiguous)
+    b.tiles.forEach(function (t) {
+      var x = bx + t.x * ts, y = by + t.y * ts;
+      if (t.spot < 0) { c.fillStyle = t.lit ? 'rgba(255,190,100,0.06)' : 'rgba(8,6,28,0.42)'; }
+      else c.fillStyle = t.lit ? 'rgba(255,196,110,0.16)' : 'rgba(8,6,28,0.52)';
+      c.fillRect(x, y, ts, ts);
+    });
+    c.save();
+    c.beginPath();
+    b.tiles.forEach(function (t) { if (t.lit) c.rect(bx + t.x * ts, by + t.y * ts, ts, ts); });
+    c.clip();
+    b.lights.forEach(function (L2) {
+      var lx = bx + L2.x / 2 * ts, ly = by + L2.y / 2 * ts, rad = Math.sqrt(L2.r2) / 2 * ts * 1.15;
+      var g = c.createRadialGradient(lx, ly, 0, lx, ly, rad);
+      g.addColorStop(0, 'rgba(255,214,140,0.42)'); g.addColorStop(0.6, 'rgba(255,190,100,0.16)'); g.addColorStop(1, 'rgba(255,170,80,0)');
+      c.fillStyle = g; c.fillRect(lx - rad, ly - rad, rad * 2, rad * 2);
+    });
+    c.restore();
+    // spot borders
+    c.strokeStyle = 'rgba(14,11,31,0.85)'; c.lineWidth = Math.max(2, ts * 0.05); c.lineCap = 'round';
+    b.tiles.forEach(function (t) {
+      if (t.spot < 0) return;
+      var x = bx + t.x * ts, y = by + t.y * ts;
+      var right = t.x < b.W - 1 ? b.tiles[t.i + 1] : null, down = t.y < b.H - 1 ? b.tiles[t.i + b.W] : null;
+      if (right && right.spot !== t.spot && right.spot >= 0) { c.beginPath(); c.moveTo(x + ts, y); c.lineTo(x + ts, y + ts); c.stroke(); }
+      if (down && down.spot !== t.spot && down.spot >= 0) { c.beginPath(); c.moveTo(x, y + ts); c.lineTo(x + ts, y + ts); c.stroke(); }
+    });
+    // edge of the light: a warm dashed rim
+    c.strokeStyle = 'rgba(255,200,110,0.9)'; c.lineWidth = Math.max(1.5, ts * 0.03); c.setLineDash([ts * 0.12, ts * 0.08]);
+    b.tiles.forEach(function (t) {
+      if (!t.lit) return;
+      var x = bx + t.x * ts, y = by + t.y * ts;
+      var nb = [[t.x - 1, t.y, x, y, x, y + ts], [t.x + 1, t.y, x + ts, y, x + ts, y + ts], [t.x, t.y - 1, x, y, x + ts, y], [t.x, t.y + 1, x, y + ts, x + ts, y + ts]];
+      nb.forEach(function (e) {
+        var inside = e[0] >= 0 && e[1] >= 0 && e[0] < b.W && e[1] < b.H;
+        if (inside && b.tiles[e[1] * b.W + e[0]].lit) return;
+        if (!inside && e[1] < 0) return; // the wall side
+        c.beginPath(); c.moveTo(e[2], e[3]); c.lineTo(e[4], e[5]); c.stroke();
+      });
+    });
+    c.setLineDash([]);
+    // objects
+    b.tiles.forEach(function (t) {
+      if (!t.obj) return;
+      R.drawObject(c, t.obj, bx + (t.x + 0.5) * ts, by + (t.y + 0.55) * ts, ts * 0.92, t.lit);
+    });
+    // porch frame
+    c.strokeStyle = '#1A1428'; c.lineWidth = 3; rr(c, bx - 1.5, by - 1.5, bw + 3, bh + 3, 4); c.stroke();
+    // lamp fixture(s) on the wall
+    b.lights.forEach(function (L2) {
+      if (L2.lantern) return;
+      var lx = bx + L2.x / 2 * ts, ly = by - R.wallH * 0.48;
+      var g = c.createRadialGradient(lx, ly, 0, lx, ly, ts * 1.6);
+      g.addColorStop(0, 'rgba(255,220,150,0.55)'); g.addColorStop(1, 'rgba(255,200,120,0)');
+      c.fillStyle = g; c.fillRect(lx - ts * 1.6, ly - ts * 1.6, ts * 3.2, ts * 3.2);
+      c.fillStyle = '#1A1428'; c.fillRect(lx - ts * 0.04, ly - R.wallH * 0.38, ts * 0.08, R.wallH * 0.2);
+      rr(c, lx - ts * 0.2, ly - R.wallH * 0.2, ts * 0.4, ts * 0.08, 2); c.fill();
+      c.fillStyle = '#FFE2A0'; rr(c, lx - ts * 0.15, ly - R.wallH * 0.12, ts * 0.3, R.wallH * 0.48, ts * 0.06); c.fill();
+      c.fillStyle = '#FFFFFF'; ell(c, lx, ly + R.wallH * 0.1, ts * 0.06, ts * 0.1); c.fill();
+      c.fillStyle = '#1A1428'; rr(c, lx - ts * 0.18, ly + R.wallH * 0.34, ts * 0.36, ts * 0.06, 2); c.fill();
+    });
+    // spot labels
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    var fs = Math.max(8, Math.round(ts * 0.15));
+    c.font = '600 ' + fs + 'px Fredoka, system-ui, sans-serif';
+    b.spots.forEach(function (sp) {
+      var i = spotAnchor(b, sp), t = b.tiles[i];
+      var label = sp.name.replace(/^the /, '').toUpperCase();
+      var x = bx + (t.x + 0.5) * ts, y = by + t.y * ts + fs * 0.9;
+      var w = c.measureText(label).width + fs * 0.8;
+      c.fillStyle = 'rgba(14,11,31,0.62)'; rr(c, x - w / 2, y - fs * 0.7, w, fs * 1.4, fs * 0.7); c.fill();
+      c.fillStyle = 'rgba(246,231,200,0.9)'; c.fillText(label, x, y + 0.5);
+    });
+    R.labelSize = fs;
+  };
+
+  // ---------------------------------------------------------------- bugs
+  function eyes(c, u, x, y, sep, r, look) {
+    [-1, 1].forEach(function (s) {
+      c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(x + s * sep * u, y * u, r * u, 0, 7); c.fill();
+      c.fillStyle = '#16112F'; c.beginPath(); c.arc(x + s * sep * u + (look || 0) * u, y * u - r * 0.15 * u, r * 0.55 * u, 0, 7); c.fill();
+      c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(x + s * sep * u + r * 0.25 * u, y * u - r * 0.4 * u, r * 0.2 * u, 0, 7); c.fill();
+    });
+  }
+  function legs(c, u, n, len, y0, dy, col, w) {
+    c.strokeStyle = col; c.lineWidth = (w || 3) * u; c.lineCap = 'round';
+    for (var i = 0; i < n; i++) {
+      var y = (y0 + i * dy) * u;
+      [-1, 1].forEach(function (s) { c.beginPath(); c.moveTo(s * 10 * u, y); c.quadraticCurveTo(s * (10 + len * 0.7) * u, y - 6 * u, s * (10 + len) * u, y + 4 * u); c.stroke(); });
+    }
+  }
+  function antennae(c, u, y, spread, len, col, feather) {
+    c.strokeStyle = col; c.lineWidth = 2.4 * u; c.lineCap = 'round';
+    [-1, 1].forEach(function (s) {
+      c.beginPath(); c.moveTo(s * 4 * u, y * u); c.quadraticCurveTo(s * spread * 0.4 * u, (y - len * 0.7) * u, s * spread * u, (y - len) * u); c.stroke();
+      if (feather) { c.fillStyle = col; ell(c, s * spread * 0.8 * u, (y - len * 0.85) * u, 5 * u, 9 * u, s * 0.5); c.fill(); }
+    });
+  }
+  // Draw a bug of a species, centred at (x, y), fitting a box of size s. t: time (for idle wiggle), glow for the firefly.
+  R.drawBug = function (c, id, x, y, s, t) {
+    var u = s / 100, wig = Math.sin((t || 0) * 3) * 0.04;
+    c.save(); c.translate(x, y); c.rotate(wig);
+    c.fillStyle = 'rgba(0,0,0,0.3)'; ell(c, 0, 34 * u, 30 * u, 9 * u); c.fill();
+    switch (id) {
+      case 'beetle':
+        legs(c, u, 3, 22, -6, 14, '#2A1F4A');
+        antennae(c, u, -30, 18, 16, '#2A1F4A');
+        c.fillStyle = '#3A2A6A'; c.beginPath(); c.arc(0, -26 * u, 13 * u, 0, 7); c.fill();
+        c.fillStyle = '#9A7BFF'; ell(c, 0, 6 * u, 26 * u, 30 * u); c.fill();
+        c.strokeStyle = '#4C35A0'; c.lineWidth = 2.5 * u; c.beginPath(); c.moveTo(0, -22 * u); c.lineTo(0, 34 * u); c.stroke();
+        c.fillStyle = 'rgba(255,255,255,0.45)'; ell(c, -11 * u, -6 * u, 6 * u, 11 * u, 0.3); c.fill();
+        eyes(c, u, 0, -28, 6, 5.5);
+        break;
+      case 'ladybug':
+        legs(c, u, 3, 18, -4, 12, '#1A1428');
+        antennae(c, u, -28, 14, 12, '#1A1428');
+        c.fillStyle = '#1A1428'; c.beginPath(); c.arc(0, -22 * u, 14 * u, 0, 7); c.fill();
+        c.fillStyle = '#FF4A5C'; c.beginPath(); c.arc(0, 8 * u, 28 * u, 0, 7); c.fill();
+        c.strokeStyle = '#1A1428'; c.lineWidth = 2.5 * u; c.beginPath(); c.moveTo(0, -20 * u); c.lineTo(0, 36 * u); c.stroke();
+        c.fillStyle = '#1A1428';
+        [[-13, -2, 5], [13, -2, 5], [-16, 16, 5.5], [16, 16, 5.5], [-6, 28, 4], [6, 28, 4], [0, 8, 3]].forEach(function (d) { c.beginPath(); c.arc(d[0] * u, d[1] * u, d[2] * u, 0, 7); c.fill(); });
+        c.fillStyle = 'rgba(255,255,255,0.4)'; ell(c, -12 * u, -6 * u, 5 * u, 8 * u, 0.4); c.fill();
+        eyes(c, u, 0, -24, 6, 5);
+        break;
+      case 'bee':
+        c.fillStyle = 'rgba(220,240,255,0.65)'; ell(c, -18 * u, -6 * u, 14 * u, 20 * u, -0.6); c.fill(); ell(c, 18 * u, -6 * u, 14 * u, 20 * u, 0.6); c.fill();
+        antennae(c, u, -28, 12, 12, '#1A1428');
+        c.fillStyle = '#FFD23E'; ell(c, 0, 6 * u, 22 * u, 30 * u); c.fill();
+        c.fillStyle = '#1A1428'; c.fillRect(-21 * u, 4 * u, 42 * u, 7 * u); c.fillRect(-18 * u, 19 * u, 36 * u, 7 * u);
+        c.beginPath(); c.moveTo(-4 * u, 34 * u); c.lineTo(4 * u, 34 * u); c.lineTo(0, 42 * u); c.closePath(); c.fill();
+        c.fillStyle = '#FFD23E'; c.beginPath(); c.arc(0, -20 * u, 14 * u, 0, 7); c.fill();
+        eyes(c, u, 0, -21, 6, 5.5);
+        break;
+      case 'moth':
+        c.fillStyle = '#E8DCC0';
+        ell(c, -22 * u, -4 * u, 24 * u, 20 * u, -0.35); c.fill(); ell(c, 22 * u, -4 * u, 24 * u, 20 * u, 0.35); c.fill();
+        c.fillStyle = '#D6C8A6'; ell(c, -16 * u, 20 * u, 14 * u, 12 * u, 0.3); c.fill(); ell(c, 16 * u, 20 * u, 14 * u, 12 * u, -0.3); c.fill();
+        c.fillStyle = '#5A4A3A';
+        [[-26, -8], [-18, 2], [24, -10], [16, 4], [-14, 22], [14, 18], [-30, 2], [30, 0]].forEach(function (d) { c.beginPath(); c.arc(d[0] * u, d[1] * u, 2.4 * u, 0, 7); c.fill(); });
+        antennae(c, u, -22, 18, 18, '#8A7558', true);
+        c.fillStyle = '#B8A88A'; ell(c, 0, 6 * u, 9 * u, 26 * u); c.fill();
+        c.fillStyle = '#F6E7C8'; c.beginPath(); c.arc(0, -18 * u, 11 * u, 0, 7); c.fill();
+        eyes(c, u, 0, -19, 5, 4.5);
+        break;
+      case 'firefly':
+        c.save();
+        c.shadowColor = '#D8FF6A'; c.shadowBlur = 22 * u;
+        c.fillStyle = '#E4FF7A'; ell(c, 0, 24 * u, 14 * u, 14 * u); c.fill();
+        c.restore();
+        c.fillStyle = 'rgba(220,240,255,0.5)'; ell(c, -14 * u, -2 * u, 11 * u, 20 * u, -0.4); c.fill(); ell(c, 14 * u, -2 * u, 11 * u, 20 * u, 0.4); c.fill();
+        antennae(c, u, -26, 12, 14, '#2A2238');
+        c.fillStyle = '#3A3050'; ell(c, 0, 2 * u, 13 * u, 20 * u); c.fill();
+        c.fillStyle = '#FF7A4A'; c.beginPath(); c.arc(0, -20 * u, 11 * u, 0, 7); c.fill();
+        eyes(c, u, 0, -21, 5, 4.5);
+        break;
+      case 'spider':
+        c.strokeStyle = '#2A1F3A'; c.lineWidth = 3.4 * u; c.lineCap = 'round';
+        for (var i = 0; i < 4; i++) {
+          var a = -0.9 + i * 0.6;
+          [-1, 1].forEach(function (s) {
+            c.beginPath(); c.moveTo(0, 0);
+            c.quadraticCurveTo(s * 30 * u, (a * 26 - 20) * u, s * 40 * u, (a * 30 + 4) * u); c.stroke();
+          });
+        }
+        c.fillStyle = '#5A3A86'; c.beginPath(); c.arc(0, 12 * u, 20 * u, 0, 7); c.fill();
+        c.fillStyle = '#B98CFF'; c.beginPath(); c.arc(0, 14 * u, 7 * u, 0, 7); c.fill();
+        c.fillStyle = '#3A2860'; c.beginPath(); c.arc(0, -12 * u, 14 * u, 0, 7); c.fill();
+        eyes(c, u, 0, -14, 6, 5);
+        c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(-3 * u, -24 * u, 2 * u, 0, 7); c.fill(); c.beginPath(); c.arc(3 * u, -24 * u, 2 * u, 0, 7); c.fill();
+        break;
+      case 'snail':
+        c.fillStyle = '#C9B8A0'; c.beginPath(); c.moveTo(-34 * u, 30 * u); c.quadraticCurveTo(-30 * u, 18 * u, 0, 22 * u); c.quadraticCurveTo(30 * u, 22 * u, 36 * u, 30 * u); c.closePath(); c.fill();
+        c.strokeStyle = '#C9B8A0'; c.lineWidth = 3 * u; c.lineCap = 'round';
+        c.beginPath(); c.moveTo(26 * u, 22 * u); c.lineTo(30 * u, -2 * u); c.stroke(); c.beginPath(); c.moveTo(34 * u, 24 * u); c.lineTo(42 * u, 2 * u); c.stroke();
+        c.fillStyle = '#FF9DB8'; c.beginPath(); c.arc(-4 * u, 4 * u, 26 * u, 0, 7); c.fill();
+        c.strokeStyle = '#C2577A'; c.lineWidth = 3.5 * u; c.beginPath();
+        for (var k = 0; k < 40; k++) { var th = k * 0.32, rr2 = 22 - k * 0.5; c.lineTo(-4 * u + Math.cos(th) * rr2 * u, 4 * u + Math.sin(th) * rr2 * u); }
+        c.stroke();
+        c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(30 * u, -4 * u, 5 * u, 0, 7); c.fill(); c.beginPath(); c.arc(42 * u, 0, 5 * u, 0, 7); c.fill();
+        c.fillStyle = '#16112F'; c.beginPath(); c.arc(31 * u, -4 * u, 2.6 * u, 0, 7); c.fill(); c.beginPath(); c.arc(43 * u, 0, 2.6 * u, 0, 7); c.fill();
+        break;
+      case 'ant':
+        legs(c, u, 3, 20, -4, 9, '#1A1428', 2.6);
+        antennae(c, u, -30, 16, 16, '#1A1428');
+        c.fillStyle = '#C24A2A'; ell(c, 0, 24 * u, 14 * u, 17 * u); c.fill();
+        c.fillStyle = '#A23A22'; ell(c, 0, 2 * u, 9 * u, 10 * u); c.fill();
+        c.fillStyle = '#C24A2A'; c.beginPath(); c.arc(0, -20 * u, 13 * u, 0, 7); c.fill();
+        c.fillStyle = 'rgba(255,255,255,0.3)'; ell(c, -5 * u, 18 * u, 4 * u, 7 * u, 0.3); c.fill();
+        eyes(c, u, 0, -21, 5.5, 5);
+        break;
+      case 'cricket':
+        c.strokeStyle = '#3A9A5A'; c.lineWidth = 4 * u; c.lineCap = 'round';
+        [-1, 1].forEach(function (s) {
+          c.beginPath(); c.moveTo(s * 8 * u, 14 * u); c.lineTo(s * 26 * u, -6 * u); c.lineTo(s * 30 * u, 36 * u); c.stroke();
+        });
+        legs(c, u, 2, 14, -6, 10, '#3A9A5A', 2.6);
+        antennae(c, u, -28, 30, 30, '#4FB870');
+        c.fillStyle = '#5FD48A'; ell(c, 0, 8 * u, 14 * u, 30 * u); c.fill();
+        c.fillStyle = '#3FA866'; ell(c, 0, 14 * u, 10 * u, 22 * u); c.fill();
+        c.fillStyle = '#6EF29A'; c.beginPath(); c.arc(0, -22 * u, 12 * u, 0, 7); c.fill();
+        eyes(c, u, 0, -23, 6, 5);
+        break;
+    }
+    c.restore();
+  };
+
+  // Small square icons for the DOM (clue text, cards), cached per species and size.
+  R.icon = function (id, px) {
+    var key = id + '@' + px;
+    if (R.icons[key]) return R.icons[key];
+    var cv = document.createElement('canvas'), d = 2;
+    cv.width = cv.height = px * d;
+    var c = cv.getContext('2d'); c.scale(d, d);
+    R.drawBug(c, id, px / 2, px / 2 + px * 0.02, px * 0.92, 0);
+    return (R.icons[key] = cv.toDataURL());
+  };
+
+  // ---------------------------------------------------------------- frame
+  // st: { pos, selected, drag:{k,x,y}, marks: {tile: {k:1}}, hl: {bugs, spot, obj, tiles}, locked, wrongBug, accuse, reveal, time }
+  R.draw = function (st) {
+    var c = R.ctx, cs = R.cs, b = cs.board, ts = R.ts, t = st.time || 0;
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.clearRect(0, 0, R.canvas.width, R.canvas.height);
+    c.drawImage(R.layer, 0, 0);
+    c.setTransform(R.dpr, 0, 0, R.dpr, 0, 0);
+
+    // crime scene marker
+    var cr = R.tileRect(cs.crimeTile), pulse = 0.5 + 0.5 * Math.sin(t * 3);
+    c.strokeStyle = 'rgba(255,94,108,' + (0.45 + 0.4 * pulse) + ')'; c.lineWidth = Math.max(2, ts * 0.045);
+    c.setLineDash([ts * 0.09, ts * 0.07]); c.lineDashOffset = -t * 12;
+    c.beginPath(); c.arc(cr.cx, cr.cy + ts * 0.04, ts * 0.46, 0, 7); c.stroke();
+    c.setLineDash([]); c.lineDashOffset = 0;
+
+    // highlights from a clue the player is pointing at
+    var hl = st.hl;
+    if (hl) {
+      c.fillStyle = 'rgba(255,228,94,0.16)'; c.strokeStyle = 'rgba(255,228,94,0.85)'; c.lineWidth = 2;
+      (hl.tiles || []).forEach(function (i) { var r = R.tileRect(i); c.fillRect(r.x + 1, r.y + 1, ts - 2, ts - 2); c.strokeRect(r.x + 1.5, r.y + 1.5, ts - 3, ts - 3); });
+    }
+
+    // selected bug: show where it may go (empty floor), faintly
+    if (st.selected >= 0 && !st.accuse && !st.reveal) {
+      c.fillStyle = 'rgba(246,231,200,0.07)';
+      b.floor.forEach(function (i) { if (st.pos.indexOf(i) < 0) { var r = R.tileRect(i); c.fillRect(r.x + 3, r.y + 3, ts - 6, ts - 6); } });
+    }
+
+    // pencil marks: tiny crossed icons of the bugs ruled out on a tile
+    if (st.marks) {
+      Object.keys(st.marks).forEach(function (i) {
+        var ks = Object.keys(st.marks[i]).map(Number).filter(function (k) { return st.marks[i][k]; });
+        if (!ks.length) return;
+        var r = R.tileRect(+i), ms = ts * 0.26;
+        ks.forEach(function (k, j) {
+          var mx = r.x + ms * 0.62 + (j % 3) * ms * 1.02, my = r.y + ts - ms * 0.62 - Math.floor(j / 3) * ms * 1.02;
+          c.globalAlpha = 0.75; R.drawBug(c, cs.cast[k], mx, my, ms, 0); c.globalAlpha = 1;
+          c.strokeStyle = CORAL; c.lineWidth = Math.max(1.5, ms * 0.12);
+          c.beginPath(); c.moveTo(mx - ms * 0.4, my - ms * 0.4); c.lineTo(mx + ms * 0.4, my + ms * 0.4); c.stroke();
+        });
+      });
+    }
+
+    // tray
+    var tr = R.tray;
+    c.fillStyle = 'rgba(22,17,47,0.85)'; rr(c, tr.x - 6, tr.y, tr.w + 12, tr.h, 14); c.fill();
+    c.strokeStyle = 'rgba(246,231,200,0.12)'; c.lineWidth = 1; rr(c, tr.x - 6 + 0.5, tr.y + 0.5, tr.w + 11, tr.h - 1, 14); c.stroke();
+    var nameSize = Math.max(9, Math.min(13, tr.slot * 0.17));
+    c.font = '600 ' + nameSize + 'px Fredoka, system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    for (var k = 0; k < cs.n; k++) {
+      var sc = R.slotCenter(k), sp = PL.species(cs.cast[k]);
+      c.fillStyle = 'rgba(246,231,200,0.06)'; c.beginPath(); c.arc(sc.x, sc.y, tr.slot * 0.38, 0, 7); c.fill();
+      c.fillStyle = st.selected === k ? AMBER : 'rgba(246,231,200,0.75)';
+      c.fillText(sp.name, sc.x, tr.y + tr.h - nameSize * 0.95);
+      if (sp.rule) { c.fillStyle = sp.color; c.beginPath(); c.arc(sc.x + tr.slot * 0.32, sc.y - tr.slot * 0.3, Math.max(2.5, tr.slot * 0.045), 0, 7); c.fill(); }
+      if (st.pos[k] < 0 && !(st.drag && st.drag.k === k && st.drag.moved)) drawBugAt(c, st, k, sc.x, sc.y, tr.slot * 0.74, t);
+    }
+
+    // bugs on the board
+    for (k = 0; k < cs.n; k++) {
+      if (st.pos[k] < 0 || (st.drag && st.drag.k === k && st.drag.moved)) continue;
+      var r = R.tileRect(st.pos[k]);
+      drawBugAt(c, st, k, r.cx, r.cy, ts * 0.8, t);
+    }
+
+    // accusation mode: everything but the bugs dims
+    if (st.accuse) {
+      c.fillStyle = 'rgba(8,6,28,0.45)'; c.fillRect(R.ox, R.oy, b.W * ts, b.H * ts);
+      for (k = 0; k < cs.n; k++) {
+        var r2 = R.tileRect(st.pos[k]);
+        c.strokeStyle = 'rgba(255,181,71,' + (0.5 + 0.5 * Math.sin(t * 5 + k)) + ')'; c.lineWidth = 2.5;
+        c.beginPath(); c.arc(r2.cx, r2.cy, ts * 0.46, 0, 7); c.stroke();
+        drawBugAt(c, st, k, r2.cx, r2.cy, ts * 0.8, t);
+      }
+    }
+
+    // dragged bug
+    if (st.drag && st.drag.moved) {
+      c.save(); c.globalAlpha = 0.95;
+      drawBugAt(c, st, st.drag.k, st.drag.x, st.drag.y - ts * 0.15, ts * 0.92, t, true);
+      c.restore();
+      var over = R.hit(st.drag.x, st.drag.y);
+      if (over && over.kind === 'tile' && b.tiles[over.i].spot >= 0) {
+        var orr = R.tileRect(over.i);
+        c.strokeStyle = AMBER; c.lineWidth = 2.5; rr(c, orr.x + 2, orr.y + 2, ts - 4, ts - 4, 6); c.stroke();
+      }
+    }
+
+    // the reveal: a spotlight closes on the culprit
+    if (st.reveal) {
+      var rv = st.reveal, rp = R.tileRect(st.pos[cs.culprit]), e = Math.min(1, rv.t / 0.9);
+      var rad = (1 - e) * Math.max(R.w, R.h) + e * ts * (0.75 + 0.05 * Math.sin(t * 4));
+      c.save();
+      c.fillStyle = 'rgba(8,6,28,' + (0.78 * e) + ')';
+      c.beginPath(); c.rect(0, 0, R.w, R.h); c.moveTo(rp.cx + rad, rp.cy); c.arc(rp.cx, rp.cy, rad, 0, Math.PI * 2, true); c.fill('evenodd');
+      var g = c.createRadialGradient(rp.cx, rp.cy, 0, rp.cx, rp.cy, rad);
+      g.addColorStop(0, 'rgba(255,220,150,' + 0.25 * e + ')'); g.addColorStop(1, 'rgba(255,200,120,0)');
+      c.fillStyle = g; c.beginPath(); c.arc(rp.cx, rp.cy, rad, 0, 7); c.fill();
+      c.restore();
+      drawBugAt(c, st, cs.culprit, rp.cx, rp.cy, ts * (0.8 + 0.25 * e), t * 2);
+    }
+  };
+
+  function drawBugAt(c, st, k, x, y, s, t, lifted) {
+    var cs = R.cs, id = cs.cast[k];
+    if (st.selected === k && !lifted) {
+      c.fillStyle = 'rgba(255,181,71,0.22)'; c.beginPath(); c.arc(x, y, s * 0.6, 0, 7); c.fill();
+      c.strokeStyle = AMBER; c.lineWidth = 2.5; c.beginPath(); c.arc(x, y, s * 0.6, 0, 7); c.stroke();
+    }
+    if (st.hl && st.hl.bugs && st.hl.bugs.indexOf(k) >= 0) {
+      c.strokeStyle = 'rgba(255,228,94,0.95)'; c.lineWidth = 2.5; c.setLineDash([4, 3]);
+      c.beginPath(); c.arc(x, y, s * 0.62, 0, 7); c.stroke(); c.setLineDash([]);
+    }
+    if (st.wrongBug === k) {
+      c.strokeStyle = CORAL; c.lineWidth = 3; c.beginPath(); c.arc(x, y, s * 0.6, 0, 7); c.stroke();
+    }
+    var bob = lifted ? Math.sin(t * 9) * 2 : 0;
+    R.drawBug(c, id, x, y + bob, s, t + k * 1.7);
+    if (st.locked && st.locked[k]) {
+      c.fillStyle = GREEN; c.beginPath(); c.arc(x + s * 0.38, y - s * 0.38, Math.max(4, s * 0.1), 0, 7); c.fill();
+      c.strokeStyle = INK; c.lineWidth = 1.5; c.beginPath(); c.moveTo(x + s * 0.33, y - s * 0.38); c.lineTo(x + s * 0.37, y - s * 0.33); c.lineTo(x + s * 0.44, y - s * 0.43); c.stroke();
+    }
+  }
+
+  R.CREAM = CREAM;
+})(PL);
+
+// ---- src/ui.js
+// PORCHLIGHT: DOM layer. The top bar, the clue list, speech bubbles and every menu screen.
+// Screens call back into PL.Game (main.js); nothing here changes game state directly.
+(function (PL) {
+  'use strict';
+
+  var UI = PL.UI = {};
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  UI.esc = esc;
+
+  function node(html) { var d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
+  UI.clear = function () { $('ui').innerHTML = ''; };
+  UI.open = function (html, cls) {
+    UI.clear();
+    var o = node('<div class="overlay ' + (cls || 'dim') + '">' + html + '</div>');
+    $('ui').appendChild(o);
+    o.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-act]');
+      if (b && !b.disabled) { PL.Audio.click(); PL.Game.act(b.getAttribute('data-act'), b.getAttribute('data-arg'), b); }
+    });
+    return o;
+  };
+  UI.isOpen = function () { return !!$('ui').firstChild; };
+
+  UI.bug = function (id, cls) {
+    var s = PL.species(id);
+    return '<b class="bug ' + (cls || '') + '" style="--c:' + s.color + '"><img alt="" src="' + PL.Render.icon(id, 40) + '">' + esc(s.name) + '</b>';
+  };
+  var LAMP_SVG = '<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="46" r="40" fill="#FFB547" opacity=".22"/><rect x="47" y="2" width="6" height="14" fill="#F6E7C8"/><rect x="30" y="14" width="40" height="9" rx="4" fill="#F6E7C8"/><rect x="35" y="22" width="30" height="48" rx="10" fill="#FFE2A0"/><ellipse cx="50" cy="44" rx="7" ry="12" fill="#fff"/><rect x="30" y="68" width="40" height="9" rx="4" fill="#F6E7C8"/></svg>';
+  var MOTH_SVG = '<svg viewBox="0 0 100 100" aria-hidden="true"><g fill="#EFE8D8"><ellipse cx="33" cy="42" rx="21" ry="13" transform="rotate(-18 33 42)"/><ellipse cx="67" cy="42" rx="21" ry="13" transform="rotate(18 67 42)"/><ellipse cx="39" cy="62" rx="12" ry="9"/><ellipse cx="61" cy="62" rx="12" ry="9"/></g><rect x="46.5" y="28" width="7" height="42" rx="3.5" fill="#3A3029"/></svg>';
+  var ICON = {
+    back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+    pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg>',
+    hint: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z"/></svg>',
+    gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>'
+  };
+  UI.LAMP_SVG = LAMP_SVG;
+
+  // ---------------------------------------------------------------- top bar
+  UI.bar = function (o) {
+    var bar = $('bar');
+    if (!o) { bar.innerHTML = ''; return; }
+    bar.innerHTML =
+      '<button class="icon-btn" id="bBack" aria-label="Back">' + ICON.back + '</button>' +
+      '<div class="ttl"><small>' + esc(o.title) + '</small><b>' + esc(o.crime) + '</b></div>' +
+      '<span class="clock" id="bClock">0:00</span>' +
+      '<button class="icon-btn" id="bPencil" aria-label="Pencil marks" title="Pencil: mark where a bug can\'t be (P)">' + ICON.pencil + '</button>' +
+      '<button class="icon-btn" id="bHint" aria-label="Hint" title="Ask the lamp for a hint (H)">' + ICON.hint + '<span class="badge" id="bHints" hidden></span></button>';
+    $('bBack').onclick = function () { PL.Game.act('leave'); };
+    $('bPencil').onclick = function () { PL.Game.act('pencil'); };
+    $('bHint').onclick = function () { PL.Game.act('hint'); };
+  };
+  UI.barState = function (s) {
+    var cl = $('bClock'); if (!cl) return;
+    cl.textContent = s.clock ? PL.fmtTime(s.time) + (s.target ? ' / ' + PL.fmtTime(s.target) : '') : '';
+    cl.classList.toggle('target', !!s.target);
+    $('bPencil').classList.toggle('on', !!s.pencil);
+    var hb = $('bHints'); hb.hidden = !s.hints; hb.textContent = s.hints;
+  };
+
+  // ---------------------------------------------------------------- clue list
+  function segHtml(segs, cs) {
+    return segs.map(function (s) { return typeof s === 'string' ? esc(s) : UI.bug(cs.cast[s.bug], 'inline'); }).join('')
+      .replace(/^(<b class="bug)/, '$1').replace(/^(\s*)([a-z])/, function (m, a, b) { return a + b.toUpperCase(); });
+  }
+  // items: [{ c, kind: 'rule'|'clue'|'crime' }]
+  UI.clues = function (cs, items) {
+    var ctx = { board: cs.board, cast: cs.cast, crimeTile: cs.crimeTile };
+    var html = '';
+    var head = function (t, n) { return '<div class="clue-head"><h4>' + t + '</h4>' + (n ? '<span>' + n + '</span>' : '') + '</div>'; };
+    var li = function (it, i) {
+      var tx;
+      if (it.kind === 'rule') {
+        var sp = PL.species(cs.cast[it.c.a]);
+        tx = UI.bug(sp.id, 'inline') + ' <span class="muted">·</span> ' + esc(sp.ruleText);
+      } else tx = segHtml(PL.clue.text(it.c, ctx), cs);
+      return '<li class="clue ' + it.kind + '" data-i="' + i + '"><span class="st"></span><span class="tx">' + tx + '</span>' +
+        (it.kind === 'clue' ? '<button class="x" data-x="' + i + '" aria-label="Cross out" title="Cross out (your note: done with this clue)">—</button>' : '') + '</li>';
+    };
+    var rules = items.map(function (it, i) { return [it, i]; }).filter(function (p) { return p[0].kind === 'rule'; });
+    var rest = items.map(function (it, i) { return [it, i]; }).filter(function (p) { return p[0].kind !== 'rule'; });
+    if (rules.length) html += head('House rules', '') + '<ul class="clue-list">' + rules.map(function (p) { return li(p[0], p[1]); }).join('') + '</ul>';
+    html += head('What the witnesses saw', items.filter(function (it) { return it.kind === 'clue'; }).length + ' clues') +
+      '<ul class="clue-list">' + rest.map(function (p) { return li(p[0], p[1]); }).join('') + '</ul>';
+    var box = $('clues');
+    box.innerHTML = html;
+    box.scrollTop = 0;
+    box.onclick = function (e) {
+      var x = e.target.closest('[data-x]');
+      if (x) { e.stopPropagation(); PL.Game.act('cross', +x.getAttribute('data-x')); return; }
+      var l = e.target.closest('.clue');
+      if (l) PL.Game.act('focusClue', +l.getAttribute('data-i'));
+    };
+    box.onpointerover = function (e) {
+      if (e.pointerType !== 'mouse') return;
+      var l = e.target.closest('.clue');
+      PL.Game.act('hoverClue', l ? +l.getAttribute('data-i') : -1);
+    };
+    box.onpointerleave = function () { PL.Game.act('hoverClue', -1); };
+  };
+  // states[i]: 1 / 0 / -1; done[i]; hl index
+  UI.clueStates = function (states, done, hl, popped, shaken) {
+    var lis = $('clues').querySelectorAll('.clue');
+    for (var j = 0; j < lis.length; j++) {
+      var i = +lis[j].getAttribute('data-i'), s = states[i], el = lis[j];
+      el.classList.toggle('ok', s === 1); el.classList.toggle('bad', s === -1);
+      el.classList.toggle('done', !!done[i]); el.classList.toggle('hl', hl === i);
+      el.querySelector('.st').textContent = s === 1 ? '✓' : s === -1 ? '!' : '';
+      if (popped && popped[i]) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+      if (shaken && shaken[i]) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+    }
+  };
+
+  // ---------------------------------------------------------------- speech
+  var sayTimer = null;
+  UI.say = function (html, cls, ms) {
+    var box = $('say');
+    clearTimeout(sayTimer);
+    if (!html) { box.innerHTML = ''; return; }
+    box.innerHTML = '<div class="bubble ' + (cls || '') + '">' + html + '</div>';
+    if (ms !== 0) sayTimer = setTimeout(function () { box.innerHTML = ''; }, ms || 3200);
+  };
+
+  // ---------------------------------------------------------------- screens
+  UI.title = function (p, info) {
+    UI.open(
+      '<div class="studio-mark">' + MOTH_SVG + 'MOTHLAMP</div>' +
+      '<button class="icon-btn gear" data-act="settings" aria-label="Settings">' + ICON.gear + '</button>' +
+      '<div class="lamp">' + LAMP_SVG + '</div>' +
+      '<h1 class="logo">PORCH<span class="dot">LIGHT</span></h1>' +
+      '<p class="tagline">Something happened at the porch light. Work out who was where.</p>' +
+      '<div class="menu">' +
+      '<button class="btn" data-act="daily"><span class="two">Tonight\'s Case #' + info.dailyNumber + '<small>' + esc(info.dailyLine) + '</small></span></button>' +
+      '<button class="btn ghost" data-act="nights"><span class="two">Case Files<small>' + info.nightsDone + ' / 30 solved · ' + info.stars + ' ★</small></span></button>' +
+      '<button class="btn ghost" data-act="late"' + (info.lateOpen ? '' : ' disabled') + '><span class="two">Late Shift<small>' + (info.lateOpen ? 'endless cases · dare a friend' : 'opens after Night 6') + '</small></span></button>' +
+      '<div class="minor"><button class="btn ghost small" data-act="book">Bug Book</button><button class="btn ghost small" data-act="code">Enter a code</button></div>' +
+      '</div>' +
+      '<div class="foot"><span>🔥 ' + (info.streak || 0) + ' night streak</span><span>v' + esc(PL.VERSION || '0.1.0') + '</span></div>', 'title');
+  };
+
+  UI.nights = function (p) {
+    var html = '<div class="panel"><div class="back-row"><button class="icon-btn" data-act="title" aria-label="Back">' + ICON.back + '</button><div><div class="eyebrow">Case Files</div><h2>Thirty nights on the porch</h2></div></div>' +
+      '<p class="sub">New suspects move in as the nights go on, each with a habit you can count on.</p><div class="nights">';
+    for (var n = 1; n <= 30; n++) {
+      var r = p.nights[n], open = n === 1 || !!p.nights[n - 1] || !!r, next = open && !r;
+      var intro = PL.NIGHTS[n - 1][2];
+      html += '<button class="night' + (open ? '' : ' locked') + (next ? ' next' : '') + '" data-act="' + (open ? 'night' : '') + '" data-arg="' + n + '">' + n +
+        '<small>' + (r ? '★★★'.slice(0, r.stars) : '') + '</small>' + (intro ? '<img alt="" src="' + PL.Render.icon(intro, 40) + '">' : '') + '</button>';
+    }
+    html += '</div></div>';
+    UI.open(html, 'dim scroll');
+  };
+
+  UI.late = function (p) {
+    var t = function (tier, sub) {
+      var best = p.late[tier] && p.late[tier].best;
+      return '<button class="tier" data-act="lateGo" data-arg="' + tier + '">' + PL.TIERS[tier].name +
+        '<small>' + sub + (best ? ' · best ' + PL.fmtTime(best) : '') + '</small></button>';
+    };
+    UI.open('<div class="panel"><div class="back-row"><button class="icon-btn" data-act="title" aria-label="Back">' + ICON.back + '</button><div><div class="eyebrow">Late Shift</div><h2>One more case</h2></div></div>' +
+      '<p class="sub">Endless porches. Every case can be sent to a friend as a dare: same porch, same clues, beat your time.</p>' +
+      '<div class="tiers">' + t('S', '3–4 bugs') + t('M', '4–5 bugs') + t('L', '5–6 bugs') + t('XL', '6–7 bugs') + '</div>' +
+      '<button class="btn ghost small" data-act="code">Have a dare code?</button></div>');
+  };
+
+  UI.code = function (err) {
+    var o = UI.open('<div class="panel"><div class="back-row"><button class="icon-btn" data-act="title" aria-label="Back">' + ICON.back + '</button><div><div class="eyebrow">Dare code</div><h2>Open a friend\'s case</h2></div></div>' +
+      '<p class="sub">Paste a code like <b>L9-3k2j1x</b>, or a whole PORCHLIGHT link.</p>' +
+      '<div class="code-field"><input id="codeIn" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="code or link"><button class="btn small" data-act="codeGo">Open</button></div>' +
+      '<div class="err" id="codeErr">' + esc(err || '') + '</div></div>');
+    var inp = o.querySelector('#codeIn');
+    setTimeout(function () { inp.focus(); }, 50);
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') PL.Game.act('codeGo'); });
+  };
+
+  UI.book = function (p, nightReached) {
+    var html = '<div class="panel"><div class="back-row"><button class="icon-btn" data-act="title" aria-label="Back">' + ICON.back + '</button><div><div class="eyebrow">Bug Book</div><h2>The regulars</h2></div></div><div class="book">';
+    PL.SPECIES.forEach(function (s) {
+      var known = s.unlock <= nightReached;
+      html += '<div class="sp' + (known ? '' : ' locked') + '"><img alt="" src="' + PL.Render.icon(s.id, 64) + '"><div><b>' + (known ? esc(s.name) : '???') + '</b>' +
+        (known ? (s.rule ? '<div class="rule">' + esc(s.ruleText) + '</div>' : '<div class="rule muted">No particular habits.</div>') + '<div class="bl">' + esc(s.blurb) + '</div>'
+          : '<div class="bl">Arrives on Night ' + s.unlock + '.</div>') + '</div></div>';
+    });
+    html += '</div><p class="sub" style="margin:0">Daily cases and Late Shift use every bug, even ones you haven\'t met. Their habits are printed on the case.</p></div>';
+    UI.open(html, 'dim scroll');
+  };
+
+  UI.settings = function (p) {
+    UI.open('<div class="panel"><div class="back-row"><button class="icon-btn" data-act="title" aria-label="Back">' + ICON.back + '</button><div><div class="eyebrow">Settings</div><h2>Porch settings</h2></div></div>' +
+      '<div class="toggle-row"><span>Sound</span><button class="switch' + (p.settings.sound ? ' on' : '') + '" data-act="toggle" data-arg="sound" aria-label="Sound"></button></div>' +
+      '<div class="toggle-row"><span>Show the timer</span><button class="switch' + (p.settings.clock ? ' on' : '') + '" data-act="toggle" data-arg="clock" aria-label="Timer"></button></div>' +
+      '<div class="toggle-row"><span>How to play</span><button class="btn ghost tiny" data-act="howto">Show</button></div>' +
+      '<p class="sub" style="margin:16px 0 0">PORCHLIGHT is a tiny game by Mothlamp. Every case is generated and checked by a solver: there is always exactly one answer, and you never need to guess.</p></div>');
+  };
+
+  var HOW = '<ul class="how">' +
+    '<li><i>1</i><span><b>Drag each bug onto the porch</b> (or tap a bug, then a tile). One bug per tile.</span></li>' +
+    '<li><i>2</i><span>Clues turn <b style="color:var(--green)">green</b> when they\'re true and <b style="color:var(--coral)">red</b> when you\'ve broken one. "Next to" means sharing a side.</span></li>' +
+    '<li><i>3</i><span>The lamp\'s pool is the dashed line: tiles inside are <b>in the light</b>.</span></li>' +
+    '<li><i>4</i><span>When every clue is green, <b>tap the culprit</b>.</span></li>' +
+    '<li><i>✎</i><span>Pencil mode: pick a bug, then tap tiles to mark where it <i style="all:unset;color:var(--coral)">can\'t</i> be.</span></li></ul>';
+  UI.howto = function () {
+    UI.open('<div class="panel"><div class="eyebrow">How to play</div><h2 style="margin-bottom:14px">Who was where?</h2>' + HOW +
+      '<div class="row center"><button class="btn" data-act="closeHow">Got it</button></div></div>');
+  };
+
+  // The card before a case: the crime, the cast, a new suspect, the friend's time to beat.
+  UI.caseCard = function (cs, o) {
+    var cast = cs.cast.map(function (id) {
+      return '<div><img alt="" src="' + PL.Render.icon(id, 64) + '">' + esc(PL.species(id).name) + '</div>';
+    }).join('');
+    var nb = cs.newSpecies ? PL.species(cs.newSpecies) : null;
+    UI.open('<div class="panel case-card"><div class="eyebrow">' + esc(cs.title) + ' · ' + esc(PL.TIERS[cs.tier].name) + ' porch</div>' +
+      '<div class="crime">' + esc(cs.crime) + '</div>' +
+      (nb ? '<div class="new-bug"><img alt="" src="' + PL.Render.icon(nb.id, 64) + '"><div><span class="eyebrow">New suspect</span><b>The ' + esc(nb.name) + '</b><span class="rule">' + esc(nb.ruleText) + '</span><div class="muted">' + esc(nb.blurb) + '</div></div></div>' : '') +
+      '<div class="cast">' + cast + '</div>' +
+      (o.tutorial ? HOW : '') +
+      (o.target ? '<p class="sub">A friend solved this porch in <span class="target">' + PL.fmtTime(o.target) + '</span>. Beat it.</p>' : '') +
+      (o.resume ? '<p class="sub">You\'ve started this one. Your board is as you left it.</p>' : '') +
+      '<div class="row center"><button class="btn" data-act="start">' + (o.resume ? 'Carry on' : 'Investigate') + '</button></div></div>');
+  };
+
+  UI.result = function (r) {
+    var sp = PL.species(r.culpritId);
+    var st = '';
+    for (var i = 0; i < 3; i++) st += '<span class="' + (i < r.stars ? 'on' : 'off') + '">★</span>';
+    var html = '<div class="panel result"><img class="culprit" alt="" src="' + PL.Render.icon(sp.id, 96) + '">' +
+      '<div class="who">It was the ' + esc(sp.name) + '!</div><p class="quote">' + esc(r.quote) + '</p>' +
+      '<div class="stars">' + st + '</div>' +
+      '<div class="stats-row"><div><b>' + PL.fmtTime(r.time) + '</b>time</div><div><b>' + r.hints + '</b>hints</div><div><b>' + r.wrong + '</b>wrong guesses</div>' +
+      (r.streak ? '<div><b>🔥 ' + r.streak + '</b>streak</div>' : '') + '</div>' +
+      (r.target ? '<div class="unlock">' + (r.time <= r.target ? 'You beat your friend\'s <b>' + PL.fmtTime(r.target) + '</b>.' : 'Your friend\'s time was <b>' + PL.fmtTime(r.target) + '</b>. So close.') + '</div>' : '') +
+      (r.unlock ? '<div class="unlock">' + r.unlock + '</div>' : '') +
+      (r.share ? '<div class="share-text" id="shareText">' + esc(r.share) + '</div>' : '') +
+      '<div class="row center">' + r.buttons.map(function (b) { return '<button class="btn' + (b[2] ? '' : ' ghost') + ' small" data-act="' + b[1] + '">' + b[0] + '</button>'; }).join('') + '</div></div>';
+    UI.open(html, 'bottom');
+  };
+
+  UI.toast = function (msg) { UI.say(msg, 'good', 2400); };
+})(PL);
+
+// ---- src/main.js
+// PORCHLIGHT: game flow, input and the frame loop. Owns the profile and the state of the case in play.
+(function (PL) {
+  'use strict';
+
+  var R = PL.Render, UI = PL.UI, A = PL.Audio, C = PL.clue;
+  var G = PL.Game = { p: null, cs: null, st: null, items: [], states: [], phase: 'title', demo: null };
+  var EMBED = typeof window !== 'undefined' && !!window.PL_EMBED;
+  var KEY = 'porchlight.v1';
+
+  // ---------------------------------------------------------------- profile
+  function fresh() {
+    return { v: 1, nights: {}, daily: {}, late: {}, streak: 0, lastDaily: null, settings: { sound: true, clock: true }, seenHow: false, saves: {} };
+  }
+  G.load = function () {
+    var p = null;
+    try { p = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { p = null; }
+    var f = fresh();
+    if (!p || p.v !== 1) return f;
+    Object.keys(f).forEach(function (k) { if (p[k] === undefined) p[k] = f[k]; });
+    Object.keys(f.settings).forEach(function (k) { if (p.settings[k] === undefined) p.settings[k] = f.settings[k]; });
+    return p;
+  };
+  G.save = function () { try { localStorage.setItem(KEY, JSON.stringify(G.p)); } catch (e) { /* private mode: play on without saving */ } };
+  function nightReached() { var n = 1; while (n <= 30 && G.p.nights[n]) n++; return n; }
+  function totalStars() { return Object.keys(G.p.nights).reduce(function (s, n) { return s + G.p.nights[n].stars; }, 0); }
+
+  // ---------------------------------------------------------------- boot
+  G.boot = function () {
+    G.p = G.load();
+    A.setOn(G.p.settings.sound);
+    R.init(document.getElementById('game'));
+    G.bindInput(R.canvas);
+    window.addEventListener('resize', function () { G.relayout(); });
+    window.addEventListener('hashchange', function () { var d = readHash(); if (d) G.openCode(d); });
+    document.addEventListener('pointerdown', function () { A.init(); }, { capture: true });
+    document.addEventListener('keydown', onKey);
+    var d = readHash();
+    if (d) G.openCode(d); else G.title();
+    var last = performance.now();
+    var frame = function (now) { G.tick(Math.min(0.1, (now - last) / 1000), now / 1000); last = now; };
+    if (/[?&]tick/.test(location.search)) setInterval(function () { frame(performance.now()); }, 16);
+    else requestAnimationFrame(function f(now) { frame(now); requestAnimationFrame(f); });
+  };
+  function readHash() {
+    if (EMBED) return null;
+    var m = /[#&]c=([^&]+)/.exec(location.hash || '');
+    return m ? PL.cases.decode(decodeURIComponent(m[1])) : null;
+  }
+
+  // Stage size: in portrait the porch gets the height it needs and the clue list takes the rest.
+  G.relayout = function () {
+    var play = document.getElementById('play'), stage = document.getElementById('stage');
+    var W = window.innerWidth, H = window.innerHeight;
+    var wide = W >= 760 && W > H * 1.05;
+    document.body.classList.toggle('wide', wide);
+    var menu = document.body.classList.contains('menus');
+    var pw = play.clientWidth, ph = play.clientHeight;
+    var sw, sh;
+    if (menu || wide) {
+      sw = menu ? pw : pw - document.getElementById('clues').offsetWidth; sh = ph;
+      stage.style.height = '';
+    } else {
+      sw = pw;
+      var b = G.cs ? G.cs.board : { W: 5, H: 5 }, n = G.cs ? G.cs.n : 5, pad = Math.max(10, sw * 0.03);
+      var ts = Math.min(92, (sw - 2 * pad) / b.W), slot = Math.min(ts * 0.92, (sw - 2 * pad) / n);
+      var need = ts * (b.H + 0.95) + slot * 1.32 + 10 + 8 + 2 * pad;
+      sh = Math.round(Math.min(need, ph * 0.66));
+      stage.style.height = sh + 'px';
+    }
+    R.resize(sw, sh);
+  };
+
+  // ---------------------------------------------------------------- title + menus
+  function setMenu(on) {
+    document.body.classList.toggle('menus', on);
+    document.getElementById('clues').style.display = on ? 'none' : '';
+    if (on) UI.bar(null);
+  }
+  G.title = function () {
+    G.phase = 'title'; G.cs = null;
+    if (!EMBED && /c=/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search);
+    A.ambience(false);
+    setMenu(true);
+    newDemo();
+    var today = PL.dateKey(), dr = G.p.daily[today];
+    var tierName = PL.TIERS[['XL', 'S', 'M', 'M', 'L', 'L', 'XL'][PL.weekday(today)]].name;
+    UI.title(G.p, {
+      dailyNumber: PL.cases.dailyNumber(today),
+      dailyLine: dr ? 'Solved in ' + PL.fmtTime(dr.time) + ' · ' + '★★★'.slice(0, dr.stars) : (G.p.saves['daily/' + today] ? 'In progress · ' : '') + tierName + ' porch · new tonight',
+      nightsDone: Object.keys(G.p.nights).length, stars: totalStars(), lateOpen: !!G.p.nights[6], streak: liveStreak()
+    });
+  };
+  function liveStreak() {
+    if (!G.p.lastDaily) return 0;
+    var gap = PL.dayNumber(PL.dateKey()) - PL.dayNumber(G.p.lastDaily);
+    return gap <= 1 ? G.p.streak : 0;
+  }
+  // The title screen's porch solves itself in the background, one bug at a time.
+  function newDemo() {
+    var seed = (Math.random() * 4294967296) >>> 0;
+    var cs = PL.generate({ tier: 'M', seed: seed, pool: PL.SPECIES.map(function (s) { return s.id; }) });
+    G.demo = { cs: cs, pos: cs.solution.map(function () { return -1; }), t: 0, step: 0 };
+    G.relayout(); R.setCase(cs);
+  }
+
+  // ---------------------------------------------------------------- starting a case
+  function caseKey(cs) {
+    return cs.mode === 'daily' ? 'daily/' + cs.day : cs.mode === 'night' ? 'night/' + cs.night : 'late/' + cs.code;
+  }
+  G.startCase = function (cs, o) {
+    o = o || {};
+    G.cs = cs; G.key = caseKey(cs); G.target = o.target || null;
+    var saved = G.p.saves[G.key];
+    G.st = {
+      pos: saved ? saved.pos.slice() : cs.cast.map(function () { return -1; }),
+      marks: saved ? JSON.parse(JSON.stringify(saved.marks || {})) : {},
+      locked: saved ? (saved.locked || []).slice() : [],
+      crossed: saved ? JSON.parse(JSON.stringify(saved.crossed || {})) : {},
+      hints: saved ? saved.hints : 0, wrong: saved ? saved.wrong : 0, time: saved ? saved.time : 0,
+      selected: -1, drag: null, hl: null, pencil: false, wrongBug: -1, accuse: false, reveal: null
+    };
+    G.items = cs.rules.map(function (c) { return { c: c, kind: 'rule' }; })
+      .concat(cs.clues.map(function (c) { return { c: c, kind: 'clue' }; }))
+      .concat([{ c: cs.crimeClue, kind: 'crime' }]);
+    G.states = G.items.map(function () { return 0; });
+    G.focus = -1; G.hover = -1;
+    UI.say(null);
+    setMenu(false);
+    UI.bar({ title: cs.title, crime: cs.crime });
+    UI.clues(cs, G.items);
+    R.setCase(cs);
+    G.relayout();
+    evaluate(true);
+    G.phase = 'card';
+    UI.caseCard(cs, { tutorial: !G.p.seenHow, target: G.target, resume: !!saved });
+  };
+  G.begin = function () {
+    UI.clear();
+    if (!G.p.seenHow) { G.p.seenHow = true; G.save(); }
+    G.phase = G.st.accuse ? 'accuse' : 'play';
+    A.ambience(true);
+    if (cs().mode === 'night' && cs().night === 1 && G.st.pos.every(function (p) { return p < 0; })) UI.say('Drag a bug from the tray onto the porch.', '', 4200);
+  };
+  function cs() { return G.cs; }
+
+  G.openCode = function (d) {
+    if (!d) return;
+    try { G.startCase(PL.cases.late(d.tier, d.poolSize, d.seed), { target: d.time }); }
+    catch (e) { G.title(); UI.code('That code didn\'t open a case.'); }
+  };
+
+  // ---------------------------------------------------------------- evaluation
+  function evaluate(silent) {
+    var c = G.cs, st = G.st, prev = G.states, popped = {}, shaken = {}, newly = 0, broke = 0;
+    G.states = G.items.map(function (it, i) {
+      var s = C.state(c.board, it.c, st.pos, c.crimeTile);
+      if (!silent && s === 1 && prev[i] !== 1) { popped[i] = 1; newly++; }
+      if (!silent && s === -1 && prev[i] !== -1) { shaken[i] = 1; broke++; }
+      return s;
+    });
+    var good = G.states.filter(function (s) { return s === 1; }).length;
+    if (!silent) {
+      if (broke) A.clueBroken(); else if (newly) A.clueTrue(good);
+    }
+    UI.clueStates(G.states, st.crossed, G.focus, popped, shaken);
+    var allPlaced = st.pos.every(function (p) { return p >= 0; });
+    var allGood = good === G.items.length;
+    if (allPlaced && allGood && !st.accuse) {
+      st.accuse = true; st.selected = -1;
+      if (G.phase === 'play') G.phase = 'accuse';
+      if (!silent) A.allFit();
+      UI.say('Everything fits. <b>' + UI.esc(c.crime) + '</b><br>Tap the culprit.', 'good', 0);
+    } else if (st.accuse && !(allPlaced && allGood)) {
+      st.accuse = false;
+      if (G.phase === 'accuse') G.phase = 'play';
+      UI.say(null);
+    } else if (!silent && allPlaced && !allGood && broke + newly) {
+      UI.say('Every bug is out, but ' + (G.states.filter(function (s) { return s === -1; }).length) + ' clue' + (G.states.filter(function (s) { return s === -1; }).length > 1 ? 's are' : ' is') + ' still red.', 'bad', 2400);
+    }
+  }
+  function persist() {
+    var st = G.st;
+    G.p.saves[G.key] = { pos: st.pos, marks: st.marks, locked: st.locked, crossed: st.crossed, hints: st.hints, wrong: st.wrong, time: Math.round(st.time) };
+    G.save();
+  }
+
+  // ---------------------------------------------------------------- moves
+  function place(k, tile) {
+    var st = G.st, b = G.cs.board;
+    if (st.locked[k] || b.tiles[tile].spot < 0) return false;
+    var j = st.pos.indexOf(tile);
+    if (j === k) return true;
+    if (j >= 0) { if (st.locked[j]) return false; st.pos[j] = st.pos[k]; }
+    st.pos[k] = tile;
+    A.drop(k);
+    evaluate(); persist();
+    return true;
+  }
+  function unplace(k) {
+    var st = G.st;
+    if (st.locked[k] || st.pos[k] < 0) return;
+    st.pos[k] = -1; A.unplace();
+    evaluate(); persist();
+  }
+  function toggleMark(k, tile) {
+    var m = G.st.marks;
+    if (G.cs.board.tiles[tile].spot < 0) return;
+    m[tile] = m[tile] || {};
+    m[tile][k] = m[tile][k] ? 0 : 1;
+    A.mark(); persist();
+  }
+  function accuse(k) {
+    var c = G.cs, st = G.st;
+    if (k === c.culprit) {
+      G.phase = 'reveal'; st.accuse = false; st.reveal = { t: 0 };
+      A.reveal(); A.ambience(false);
+      var csp = PL.species(c.cast[k]);
+      UI.say('<span class="big-say">It was the ' + UI.esc(csp.name) + '!</span><br>' + UI.esc(csp.confess[c.seed % csp.confess.length]), 'good', 0);
+      setTimeout(finish, 2300);
+    } else {
+      st.wrong++; st.wrongBug = k; A.wrong(); persist();
+      var sp = PL.species(c.cast[k]);
+      UI.say(UI.bug(sp.id) + ': ' + UI.esc(sp.alibi) + '<br><span class="muted">Read the last clue again.</span>', 'bad', 3600);
+      setTimeout(function () { if (st.wrongBug === k) st.wrongBug = -1; }, 1400);
+    }
+  }
+
+  // The lamp's hint: first point out a bug that's in the wrong place, otherwise place one bug for you.
+  function hint() {
+    var c = G.cs, st = G.st;
+    if (G.phase !== 'play' && G.phase !== 'accuse') return;
+    if (st.accuse) { UI.say('Every clue is green. The last clue names the culprit.', 'good', 3000); return; }
+    var wrong = -1;
+    for (var k = 0; k < c.n; k++) if (st.pos[k] >= 0 && st.pos[k] !== c.solution[k]) { wrong = k; break; }
+    st.hints++; A.hint();
+    if (wrong >= 0) {
+      st.wrongBug = wrong;
+      UI.say('The lamp flickers: ' + UI.bug(c.cast[wrong]) + ' isn\'t where it was.', 'bad', 3200);
+      setTimeout(function () { if (st.wrongBug === wrong) st.wrongBug = -1; }, 2400);
+    } else {
+      // place the unplaced bug the solver pins down most easily from what's already right
+      var P = { board: c.board, n: c.n, clues: PL.allClues(c), crimeTile: c.crimeTile };
+      var D = PL.solver.initial(P);
+      for (k = 0; k < c.n; k++) if (st.pos[k] >= 0) D[k] = [st.pos[k]];
+      PL.solver.propagate(P, D, null);
+      var best = -1;
+      for (k = 0; k < c.n; k++) if (st.pos[k] < 0 && (best < 0 || D[k].length < D[best].length)) best = k;
+      if (best < 0) return;
+      var occupant = st.pos.indexOf(c.solution[best]);
+      if (occupant >= 0) st.pos[occupant] = -1;
+      st.pos[best] = c.solution[best]; st.locked[best] = 1; st.wrongBug = -1;
+      UI.say('The lamp shows you where ' + UI.bug(c.cast[best]) + ' was.', 'good', 3000);
+      A.drop(best); evaluate();
+    }
+    persist();
+  }
+
+  // ---------------------------------------------------------------- finishing
+  function finish() {
+    var c = G.cs, st = G.st, p = G.p;
+    var stars = PL.cases.stars(st.hints), time = Math.round(st.time), r = { culpritId: c.cast[c.culprit], stars: stars, time: time, hints: st.hints, wrong: st.wrong, target: G.target };
+    var sp = PL.species(c.cast[c.culprit]);
+    r.quote = sp.confess[c.seed % sp.confess.length];
+    delete p.saves[G.key];
+    var link = EMBED ? '' : location.href.split('#')[0].split('?')[0];
+    if (c.mode === 'night') {
+      var before = p.nights[c.night], wasLate = !!p.nights[6];
+      if (!before || stars > before.stars || (stars === before.stars && time < before.time)) p.nights[c.night] = { stars: stars, time: time };
+      var next = c.night < 30 ? PL.NIGHTS[c.night][2] : null;
+      if (next) r.unlock = 'Tomorrow night, a new suspect: <b>the ' + PL.species(next).name + '</b>.';
+      if (!wasLate && p.nights[6]) r.unlock = '<b>Late Shift</b> is open: endless cases you can send to friends.';
+      r.buttons = c.night < 30 ? [['Next night →', 'nextNight', true], ['Case Files', 'nights']] : [['Case Files', 'nights', true], ['Menu', 'title']];
+    } else if (c.mode === 'daily') {
+      var had = p.daily[c.day];
+      if (!had) {
+        p.daily[c.day] = { stars: stars, time: time, hints: st.hints, wrong: st.wrong };
+        var gap = p.lastDaily ? PL.dayNumber(c.day) - PL.dayNumber(p.lastDaily) : 99;
+        if (c.day === PL.dateKey()) { p.streak = gap === 1 ? p.streak + 1 : gap === 0 ? p.streak : 1; p.lastDaily = c.day; }
+      }
+      r.streak = liveStreak();
+      r.share = dailyShare(c, p.daily[c.day], r.streak) + (link ? '\n' + link : '');
+      r.buttons = [['Copy result', 'copyShare', true], ['Menu', 'title']];
+    } else {
+      var L = p.late[c.tier] || (p.late[c.tier] = { solved: 0, best: 0 });
+      L.solved++; if (!L.best || time < L.best) L.best = time;
+      var dare = PL.cases.encode(c.tier, c.poolSize, c.seed, time);
+      r.share = 'I solved this PORCHLIGHT porch in ' + PL.fmtTime(time) + (st.hints ? ' (with ' + st.hints + ' hint' + (st.hints > 1 ? 's' : '') + ')' : '') + '. Your turn 🏮\n' +
+        (link ? link + '#c=' + dare + '\n' : '') + 'Dare code: ' + dare;
+      r.buttons = [['Copy dare', 'copyShare', true], ['Another', 'lateAgain'], ['Menu', 'title']];
+    }
+    G.save();
+    G.phase = 'done';
+    UI.say(null);
+    UI.result(r);
+    G.lastShare = r.share;
+  }
+  function dailyShare(c, d, streak) {
+    var day = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][PL.weekday(c.day)];
+    return '🏮 PORCHLIGHT #' + c.number + ' · ' + day + ' · ' + PL.TIERS[c.tier].name + '\n' +
+      c.crime + '\n' +
+      '🔦 ' + PL.fmtTime(d.time) + ' · ' + '⭐'.repeat(d.stars) + '\n' +
+      (d.hints ? '💡 ' + d.hints + ' hint' + (d.hints > 1 ? 's' : '') : 'no hints') + ' · ' + (d.wrong ? '❌ ' + d.wrong + ' wrong guess' + (d.wrong > 1 ? 'es' : '') : 'first guess') +
+      (streak > 1 ? ' · 🔥' + streak : '');
+  }
+  function copy(text) {
+    var done = function () { UI.toast('Copied. Paste it anywhere.'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, function () { fallback(); });
+    else fallback();
+    function fallback() {
+      var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) { UI.toast('Select the text and copy it.'); }
+      ta.remove();
+    }
+  }
+
+  // ---------------------------------------------------------------- actions (buttons, keys)
+  G.act = function (a, arg) {
+    switch (a) {
+      case 'title': UI.clear(); G.title(); break;
+      case 'daily': G.startCase(PL.cases.daily(PL.dateKey())); break;
+      case 'nights': setMenu(true); if (!G.demo || G.cs) newDemo(); G.cs = null; G.phase = 'title'; UI.nights(G.p); break;
+      case 'night': if (arg) G.startCase(PL.cases.night(+arg)); break;
+      case 'nextNight': G.startCase(PL.cases.night(G.cs.night + 1)); break;
+      case 'late': UI.late(G.p); break;
+      case 'lateGo': G.lateTier = arg; G.startCase(PL.cases.late(arg, 9, (Math.random() * 4294967296) >>> 0)); break;
+      case 'lateAgain': G.startCase(PL.cases.late(G.cs.tier, 9, (Math.random() * 4294967296) >>> 0)); break;
+      case 'book': UI.book(G.p, nightReached()); break;
+      case 'settings': UI.settings(G.p); break;
+      case 'howto': UI.howto(); break;
+      case 'closeHow': UI.clear(); if (G.phase === 'title') G.title(); else UI.settings(G.p); break;
+      case 'toggle':
+        G.p.settings[arg] = !G.p.settings[arg]; G.save();
+        if (arg === 'sound') A.setOn(G.p.settings.sound);
+        UI.settings(G.p); break;
+      case 'code': UI.code(); break;
+      case 'codeGo': {
+        var v = (document.getElementById('codeIn') || {}).value || '';
+        var m = /c=([^&\s]+)/.exec(v), d = PL.cases.decode(decodeURIComponent(m ? m[1] : v));
+        if (!d) { var e = document.getElementById('codeErr'); if (e) e.textContent = 'That doesn\'t look like a PORCHLIGHT code.'; break; }
+        G.openCode(d); break;
+      }
+      case 'start': G.begin(); break;
+      case 'copyShare': if (G.lastShare) copy(G.lastShare); break;
+      case 'leave':
+        if (G.phase === 'reveal') break;
+        if (G.cs && G.phase !== 'done') persist();
+        UI.say(null);
+        if (G.cs && G.cs.mode === 'night') { G.act('nights'); } else G.title();
+        break;
+      case 'pencil': G.st.pencil = !G.st.pencil; if (G.st.pencil) UI.say(G.st.selected >= 0 ? 'Pencil: tap tiles where ' + UI.bug(G.cs.cast[G.st.selected]) + ' can\'t be.' : 'Pencil: pick a bug, then tap the tiles where it can\'t be.', '', 2600); else UI.say(null); break;
+      case 'hint': hint(); break;
+      case 'cross': G.st.crossed[arg] = !G.st.crossed[arg]; UI.clueStates(G.states, G.st.crossed, G.focus); persist(); break;
+      case 'focusClue': G.focus = G.focus === arg ? -1 : arg; UI.clueStates(G.states, G.st.crossed, G.focus); break;
+      case 'hoverClue': G.hover = arg; break;
+    }
+  };
+  function onKey(e) {
+    if (e.target && e.target.tagName === 'INPUT') return;
+    var st = G.st;
+    if (e.key === 'Escape') {
+      if (G.phase === 'play' || G.phase === 'accuse') { if (st.selected >= 0) st.selected = -1; else G.act('leave'); }
+      else if (UI.isOpen() && G.phase !== 'title' && G.phase !== 'done') G.act('leave');
+      else if (G.phase === 'title' && UI.isOpen()) G.title();
+      return;
+    }
+    if (G.phase !== 'play' && G.phase !== 'accuse') return;
+    if (e.key === 'p' || e.key === 'P') G.act('pencil');
+    else if (e.key === 'h' || e.key === 'H') G.act('hint');
+    else if (/^[1-7]$/.test(e.key) && +e.key <= G.cs.n) { st.selected = st.selected === +e.key - 1 ? -1 : +e.key - 1; A.pick(); }
+    else if ((e.key === 'Backspace' || e.key === 'Delete') && st.selected >= 0) unplace(st.selected);
+  }
+
+  // Which tiles a clue is about, for highlighting.
+  function hlFor(it) {
+    var c = it.c, b = G.cs.board, tiles = [];
+    var floor = b.floor;
+    switch (c.t) {
+      case 'spot': tiles = b.spots[c.s].tiles; break;
+      case 'light': tiles = floor.filter(function (i) { return b.tiles[i].lit === !!c.v; }); break;
+      case 'obj': tiles = b.tiles.filter(function (t) { return t.obj === c.o; }).map(function (t) { return t.i; }); break;
+      case 'objany': tiles = b.tiles.filter(function (t) { return t.obj; }).map(function (t) { return t.i; }); break;
+      case 'edge': tiles = floor.filter(function (i) { return b.tiles[i].edge; }); break;
+      case 'count':
+        if (c.k === 'spot') tiles = b.spots[c.s].tiles;
+        else if (c.k === 'lit') tiles = floor.filter(function (i) { return b.tiles[i].lit; });
+        else if (c.k === 'crime') tiles = [G.cs.crimeTile];
+        break;
+    }
+    return { bugs: C.involves(c), tiles: tiles };
+  }
+
+  // ---------------------------------------------------------------- input
+  G.bindInput = function (canvas) {
+    var down = null;
+    function xy(e) { var r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+    canvas.addEventListener('pointerdown', function (e) {
+      if (G.phase !== 'play' && G.phase !== 'accuse') return;
+      var q = xy(e), h = R.hit(q.x, q.y), st = G.st, k = -1;
+      if (h && h.kind === 'tile') k = st.pos.indexOf(h.i);
+      else if (h && h.kind === 'tray' && h.k >= 0 && st.pos[h.k] < 0) k = h.k;
+      down = { x: q.x, y: q.y, hit: h, k: k };
+      if (k >= 0 && !st.locked[k] && !st.accuse) {
+        st.drag = { k: k, x: q.x, y: q.y, moved: false };
+        canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId);
+      }
+      e.preventDefault();
+    });
+    canvas.addEventListener('pointermove', function (e) {
+      var st = G.st;
+      if (!st || !st.drag) return;
+      var q = xy(e);
+      if (!st.drag.moved && Math.hypot(q.x - down.x, q.y - down.y) > 7) { st.drag.moved = true; A.pick(); st.selected = -1; }
+      st.drag.x = q.x; st.drag.y = q.y;
+    });
+    var up = function (e) {
+      var st = G.st;
+      if (!st || !down) return;
+      var q = xy(e), d = st.drag;
+      st.drag = null;
+      if (d && d.moved) {
+        var h = R.hit(q.x, q.y);
+        if (h && h.kind === 'tile') place(d.k, h.i);
+        else if (h && h.kind === 'tray') unplace(d.k);
+        down = null; return;
+      }
+      tap(down.hit, down.k);
+      down = null;
+    };
+    canvas.addEventListener('pointerup', up);
+    canvas.addEventListener('pointercancel', function () { if (G.st) G.st.drag = null; down = null; });
+  };
+  function tap(h, k) {
+    var st = G.st, b = G.cs.board;
+    if (!h) { st.selected = -1; return; }
+    if (st.accuse) { if (k >= 0) accuse(k); return; }
+    if (k >= 0) {
+      // tapping a bug: select it (tapping the selected one in the tray again deselects)
+      if (h.kind === 'tray' || st.selected !== k) { st.selected = st.selected === k ? -1 : k; A.pick(); if (st.pencil && st.selected >= 0) UI.say('Pencil: tap tiles where ' + UI.bug(G.cs.cast[k]) + ' can\'t be.', '', 2200); }
+      else st.selected = -1;
+      return;
+    }
+    if (h.kind === 'tray') {
+      // a placed bug's empty slot: tap to send it back if selected, else select it
+      if (h.k >= 0 && st.pos[h.k] >= 0) { if (st.selected === h.k) { unplace(h.k); st.selected = -1; } else { st.selected = h.k; A.pick(); } }
+      else st.selected = -1;
+      return;
+    }
+    if (h.kind === 'tile') {
+      if (b.tiles[h.i].spot < 0) return;
+      if (st.selected < 0) { UI.say('Pick a bug from the tray first.', '', 1600); return; }
+      if (st.pencil) { toggleMark(st.selected, h.i); return; }
+      if (place(st.selected, h.i)) st.selected = -1;
+    }
+  }
+
+  // ---------------------------------------------------------------- frame
+  var barT = 0;
+  G.tick = function (dt, now) {
+    if (G.phase === 'title' && G.demo) {
+      var dm = G.demo;
+      dm.t += dt;
+      if (dm.t > 0.9) {
+        dm.t = 0;
+        if (dm.step < dm.cs.n) { dm.pos[dm.step] = dm.cs.solution[dm.step]; dm.step++; }
+        else if (dm.step++ > dm.cs.n + 3) { newDemo(); }
+      }
+      R.draw({ pos: dm.pos, selected: -1, time: now, marks: null, hl: null });
+      return;
+    }
+    if (!G.cs || !G.st) return;
+    var st = G.st;
+    if ((G.phase === 'play' || G.phase === 'accuse') && !document.hidden && !UI.isOpen()) st.time += dt;
+    if (st.reveal) st.reveal.t += dt;
+    barT -= dt;
+    if (barT <= 0) {
+      barT = 0.25;
+      UI.barState({ time: st.time, clock: G.p.settings.clock, target: G.target, pencil: st.pencil, hints: st.hints });
+    }
+    var fi = G.hover >= 0 ? G.hover : G.focus;
+    st.hl = fi >= 0 && G.items[fi] ? hlFor(G.items[fi]) : null;
+    st.time2 = now;
+    R.draw({ pos: st.pos, selected: st.selected, drag: st.drag, marks: st.marks, hl: st.hl, locked: st.locked,
+      wrongBug: st.wrongBug, accuse: st.accuse, reveal: st.reveal, time: now });
+  };
+
+  if (typeof window !== 'undefined') {
+    var go = function () { G.boot(); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
+  }
+})(PL);
+
+</script>
+</body>
+</html>
