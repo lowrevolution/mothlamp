@@ -185,6 +185,11 @@ button { font-family: inherit; }
 .formula { display: flex; gap: 10px; align-items: center; justify-content: center; margin: 12px 0 18px; font-weight: 700; font-size: 20px; }
 .formula .g { color: var(--amber); } .formula .m { color: var(--cyan); }
 .formula .chip { padding: 6px 14px; border-radius: 999px; background: rgba(255,255,255,0.05); box-shadow: 0 0 0 1px var(--line) inset; }
+.demo-end { margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(246,231,200,0.14); display: grid; gap: 12px; justify-items: center; }
+.demo-end p { margin: 0; color: var(--cream-dim); font-size: 15px; max-width: 34ch; }
+.demo-end b { color: var(--cream); }
+.demo-end .btn { text-decoration: none; }
+.title .foot .ver { opacity: 0.7; }
 .stats-row { display: flex; justify-content: center; gap: 22px; margin: 6px 0 18px; color: var(--cream-dim); font-size: 14px; flex-wrap: wrap; }
 .stats-row b { display: block; color: var(--cream); font-size: 22px; }
 .earn { list-style: none; padding: 0; margin: 0 0 18px; }
@@ -284,7 +289,9 @@ button { font-family: inherit; }
 <canvas id="game" aria-label="CHAINBLOOM play field"></canvas>
 <div id="hud"></div>
 <div id="ui"></div>
+<script>window.CB_DEMO = {"updatesUrl":"https://lowrevolution.github.io/mothlamp/#updates","shareUrl":"https://lowrevolution.github.io/mothlamp/"};</script>
 <script>
+var CB = window.CB = window.CB || {}; CB.VERSION = "0.2.0";
 // ---- src/util.js
 // CHAINBLOOM — shared utilities. Loaded first; everything hangs off the CB namespace.
 // Works in the browser (window.CB) and in Node (tools/balance.js loads these files into a vm context).
@@ -377,6 +384,11 @@ var CB = (typeof window !== 'undefined') ? (window.CB = window.CB || {}) : (glob
 
   // Set by the single-file embed build: downloads and native dialogs are unavailable there.
   CB.EMBED = typeof window !== 'undefined' && !!window.CB_EMBED;
+  // Set by the demo build (DEMO=1 in tools/build.js): { updatesUrl, shareUrl }. Null in the full game.
+  // The demo is the whole run (8 nights, every jar and catalyst); Endless waits for the full game.
+  CB.DEMO = (typeof window !== 'undefined' && window.CB_DEMO) || null;
+  // Pasted results point here. The page's own address is no good on itch.io, where the game runs in a frame.
+  CB.SHARE_URL = (CB.DEMO && CB.DEMO.shareUrl) || 'https://lowrevolution.github.io/mothlamp/';
 
   CB.RNG = RNG;
   CB.hashString = hashString;
@@ -1270,6 +1282,7 @@ var CB = (typeof window !== 'undefined') ? (window.CB = window.CB || {}) : (glob
     for (var i = 0; i < row.length; i += 4) lines.push(row.slice(i, i + 4).join(' '));
     lines.push('Best chain ' + this.stats.bestChain + ' · Best bloom ' + CB.fmt(this.stats.bestScore));
     lines.push(this.won || this.endless ? ('🏆 Survived ' + (this.ante - 1) + ' nights') : ('Reached Night ' + this.ante));
+    lines.push(CB.SHARE_URL);
     return lines.join('\n');
   };
 
@@ -2477,6 +2490,7 @@ var CB = (typeof window !== 'undefined') ? (window.CB = window.CB || {}) : (glob
       '<div class="foot">' +
       (p.runs ? '<span>Runs <b>' + p.runs + '</b></span><span>Wins <b>' + p.wins + '</b></span><span>Best chain <b>' + p.bestChain + '</b></span><span>Best bloom <b>' + CB.fmt(p.bestScore) + '</b></span>'
         : '<span>a mothlamp game · tap anywhere in the jar to play</span>') +
+      '<span class="ver">v' + (CB.VERSION || 'dev') + (CB.DEMO ? ' · demo' : '') + '</span>' +
       '</div></div>');
   };
 
@@ -2679,9 +2693,13 @@ var CB = (typeof window !== 'undefined') ? (window.CB = window.CB || {}) : (glob
       (CB.EMBED ? '' : '<button class="btn ghost small" data-a="saveCard">🖼️ Save card</button>') +
       (CB.Clip.best ? '<button class="btn ghost small" data-a="saveBestClip">🎬 Best chain clip</button>' : '') +
       '</div><div class="row center">' +
-      (victory ? '<button class="btn violet" data-a="endless">Keep going (Endless)</button>' : '') +
+      (victory && !CB.DEMO ? '<button class="btn violet" data-a="endless">Keep going (Endless)</button>' : '') +
       '<button class="btn" data-a="play">New run</button>' +
-      '<button class="btn ghost" data-a="title">Title</button></div></div></div>';
+      '<button class="btn ghost" data-a="title">Title</button></div>' +
+      (CB.DEMO ? '<div class="demo-end"><p>' + (victory ? '<b>That’s the whole demo.</b> Endless mode and more are coming in the full game.'
+        : '<b>Enjoying the demo?</b> Endless mode and more are coming in the full game.') + '</p>' +
+        '<a class="btn' + (victory ? '' : ' ghost') + '" href="' + esc(CB.DEMO.updatesUrl) + '" target="_blank" rel="noopener">Get updates</a></div>' : '') +
+      '</div></div>';
     UI.show(html);
     UI._card = card;
   };
@@ -3192,6 +3210,7 @@ var CB = (typeof window !== 'undefined') ? (window.CB = window.CB || {}) : (glob
         }
         break;
       case 'endless':
+        if (CB.DEMO) break;
         A.ui('click');
         run.continueEndless();
         G.goShop();

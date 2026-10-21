@@ -17,7 +17,7 @@ Then open <http://localhost:5320/>.
 | Path | What |
 |---|---|
 | `index.html` | The whole site: hero, games, about, press. Palette and type from the brand sheet in `Chainbloom/studio/brand.html` |
-| `play/` | Single-file demo builds, copied from each game's `dist/` (CHAINBLOOM, PORCHLIGHT) |
+| `play/` | Preview copies of the demo builds (CHAINBLOOM, PORCHLIGHT), from each game's `dist/*-demo.html`; replaced by itch.io links at launch |
 | `assets/teaser/` | PEPPERED teaser clip (MP4 + WebM, 4:5) and poster |
 | `assets/shots/` | Title and gameplay screenshots, 1280×800 |
 | `assets/logo/` | Mark SVGs (on ink, on cream, one colour) and PNG lockups |
@@ -36,3 +36,12 @@ node tools/shots.js    # optional: new screenshots
 ```
 
 Adding a game: add it to `GAMES` in `tools/sync.js`, a capture block in `tools/shots.js`, and an `<article class="game">` in `index.html`.
+
+## Before launch
+
+The repo stays private until these are done:
+
+1. **Email sign-up.** Pick a provider, then set `data-action` and `data-field` on the `#signup` form in `index.html` (examples in the comment above it). Until then the form says "Sign-up isn't connected yet." The demos' "Get updates" buttons point to `#updates` here.
+2. **Play links to itch.io.** The demos ship on itch.io first (`dist/itch/*-demo.zip` in each game). Saves live with the itch version, so once the itch pages exist, point the Play buttons there and remove `play/`. Until then `play/` holds copies of the demo builds for previewing.
+3. **Demo gates.** `node tools/demo-check.js` in Chainbloom and Porchlight passes, and the manual gates (sound, real phones, cold playtests) are done.
+4. Make the repo public and turn on Pages from `main` at `/`.

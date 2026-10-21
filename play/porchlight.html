@@ -259,6 +259,11 @@ body.wide #clues { flex: none; width: min(410px, 40vw); padding-top: 10px; borde
   .nights { gap: 6px; }
 }
 
+/* demo build: the end-of-demo panel and the note under Case Files */
+.demo-end .menu { margin-top: 18px; }
+.demo-note { margin: 16px 0 0; }
+.linkish { appearance: none; border: 0; background: none; padding: 0; font: inherit; color: var(--amber); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
 </style>
 </head>
 <body>
@@ -270,8 +275,9 @@ body.wide #clues { flex: none; width: min(410px, 40vw); padding-top: 10px; borde
     </main>
   </div>
   <div id="ui"></div>
+<script>window.PL_DEMO = {"updatesUrl":"https://lowrevolution.github.io/mothlamp/#updates","shareUrl":"https://lowrevolution.github.io/mothlamp/"};</script>
 <script>
-var PL = window.PL = window.PL || {}; PL.VERSION = "0.1.0";
+var PL = window.PL = window.PL || {}; PL.VERSION = "0.2.0";
 // ---- src/util.js
 // PORCHLIGHT: shared utilities. Loaded first; everything hangs off the PL namespace.
 // Works in the browser (window.PL) and in Node (tools/*.js load these files with vm.runInThisContext).
@@ -2012,11 +2018,21 @@ var PL = (typeof window !== 'undefined') ? (window.PL = window.PL || {}) : (glob
       '<p class="tagline">Something happened at the porch light. Work out who was where.</p>' +
       '<div class="menu">' +
       '<button class="btn" data-act="daily"><span class="two">Tonight\'s Case #' + info.dailyNumber + '<small>' + esc(info.dailyLine) + '</small></span></button>' +
-      '<button class="btn ghost" data-act="nights"><span class="two">Case Files<small>' + info.nightsDone + ' / 30 solved · ' + info.stars + ' ★</small></span></button>' +
-      '<button class="btn ghost" data-act="late"' + (info.lateOpen ? '' : ' disabled') + '><span class="two">Late Shift<small>' + (info.lateOpen ? 'endless cases · dare a friend' : 'opens after Night 6') + '</small></span></button>' +
+      '<button class="btn ghost" data-act="nights"><span class="two">Case Files<small>' + info.nightsDone + ' / ' + (PL.DEMO ? PL.DEMO_NIGHTS + ' solved in the demo' : '30 solved') + ' · ' + info.stars + ' ★</small></span></button>' +
+      (PL.DEMO ? '<button class="btn ghost" data-act="late"><span class="two">Late Shift<small>in the full game</small></span></button>'
+        : '<button class="btn ghost" data-act="late"' + (info.lateOpen ? '' : ' disabled') + '><span class="two">Late Shift<small>' + (info.lateOpen ? 'endless cases · dare a friend' : 'opens after Night 6') + '</small></span></button>') +
       '<div class="minor"><button class="btn ghost small" data-act="book">Bug Book</button><button class="btn ghost small" data-act="code">Enter a code</button></div>' +
       '</div>' +
-      '<div class="foot"><span>🔥 ' + (info.streak || 0) + ' night streak</span><span>v' + esc(PL.VERSION || '0.1.0') + '</span></div>', 'title');
+      '<div class="foot"><span>🔥 ' + (info.streak || 0) + ' night streak</span><span>v' + esc(PL.VERSION || 'dev') + (PL.DEMO ? ' · demo' : '') + '</span></div>', 'title');
+  };
+
+  // The demo's last stop: what's free, what the full game adds, and where to hear about it.
+  UI.demoEnd = function () {
+    UI.open('<div class="panel demo-end"><div class="back-row"><button class="icon-btn" data-act="title" aria-label="Back">' + ICON.back + '</button><div><div class="eyebrow">Demo</div><h2>That\'s the demo\'s Case Files</h2></div></div>' +
+      '<p class="sub"><b>Tonight\'s Case</b> stays free: a new porch every night, the same for everyone.</p>' +
+      '<p class="sub">The full game adds Nights 7 to 30, where the Firefly, Spider, Snail, Ant and Cricket move in, and <b>Late Shift</b>: endless cases you can send to friends as dares.</p>' +
+      '<div class="menu"><a class="btn" href="' + esc(PL.DEMO.updatesUrl) + '" target="_blank" rel="noopener">Get updates</a>' +
+      '<button class="btn ghost" data-act="daily">Tonight\'s Case</button></div></div>', 'dim');
   };
 
   UI.nights = function (p) {
@@ -2024,11 +2040,13 @@ var PL = (typeof window !== 'undefined') ? (window.PL = window.PL || {}) : (glob
       '<p class="sub">New suspects move in as the nights go on, each with a habit you can count on.</p><div class="nights">';
     for (var n = 1; n <= 30; n++) {
       var r = p.nights[n], open = n === 1 || !!p.nights[n - 1] || !!r, next = open && !r;
+      var full = PL.DEMO && n > PL.DEMO_NIGHTS;
+      if (full) { open = false; next = false; }
       var intro = PL.NIGHTS[n - 1][2];
-      html += '<button class="night' + (open ? '' : ' locked') + (next ? ' next' : '') + '" data-act="' + (open ? 'night' : '') + '" data-arg="' + n + '">' + n +
+      html += '<button class="night' + (open ? '' : ' locked') + (next ? ' next' : '') + '" data-act="' + (open ? 'night' : full ? 'demoEnd' : '') + '" data-arg="' + n + '">' + n +
         '<small>' + (r ? '★★★'.slice(0, r.stars) : '') + '</small>' + (intro ? '<img alt="" src="' + PL.Render.icon(intro, 40) + '">' : '') + '</button>';
     }
-    html += '</div></div>';
+    html += '</div>' + (PL.DEMO ? '<p class="sub demo-note">Nights 1 to ' + PL.DEMO_NIGHTS + ' are in the demo. The rest are in the full game. <button class="linkish" data-act="demoEnd">What\'s next</button></p>' : '') + '</div>';
     UI.open(html, 'dim scroll');
   };
 
@@ -2128,6 +2146,10 @@ var PL = (typeof window !== 'undefined') ? (window.PL = window.PL || {}) : (glob
   var R = PL.Render, UI = PL.UI, A = PL.Audio, C = PL.clue;
   var G = PL.Game = { p: null, cs: null, st: null, items: [], states: [], phase: 'title', demo: null };
   var EMBED = typeof window !== 'undefined' && !!window.PL_EMBED;
+  // Set by the demo build (DEMO in tools/build.js): { updatesUrl, shareUrl }. Null in the full game. The demo keeps
+  // Tonight's Case and Case Files Nights 1–6; later nights and Late Shift wait for the full game. Dares from friends still open.
+  var DEMO = PL.DEMO = (typeof window !== 'undefined' && window.PL_DEMO) || null;
+  PL.DEMO_NIGHTS = 6;
   var KEY = 'porchlight.v1';
 
   // ---------------------------------------------------------------- profile
@@ -2210,7 +2232,7 @@ var PL = (typeof window !== 'undefined') ? (window.PL = window.PL || {}) : (glob
     UI.title(G.p, {
       dailyNumber: PL.cases.dailyNumber(today),
       dailyLine: dr ? 'Solved in ' + PL.fmtTime(dr.time) + ' · ' + '★★★'.slice(0, dr.stars) : (G.p.saves['daily/' + today] ? 'In progress · ' : '') + tierName + ' porch · new tonight',
-      nightsDone: Object.keys(G.p.nights).length, stars: totalStars(), lateOpen: !!G.p.nights[6], streak: liveStreak()
+      nightsDone: Object.keys(G.p.nights).length, stars: totalStars(), lateOpen: !DEMO && !!G.p.nights[6], streak: liveStreak()
     });
   };
   function liveStreak() {
@@ -2385,7 +2407,8 @@ var PL = (typeof window !== 'undefined') ? (window.PL = window.PL || {}) : (glob
     var sp = PL.species(c.cast[c.culprit]);
     r.quote = sp.confess[c.seed % sp.confess.length];
     delete p.saves[G.key];
-    var link = EMBED ? '' : location.href.split('#')[0].split('?')[0];
+    // On itch.io the game runs in a frame, so its own address is no use to a friend: the demo shares the Mothlamp site.
+    var link = DEMO ? DEMO.shareUrl : EMBED ? '' : location.href.split('#')[0].split('?')[0];
     if (c.mode === 'night') {
       var before = p.nights[c.night], wasLate = !!p.nights[6];
       if (!before || stars > before.stars || (stars === before.stars && time < before.time)) p.nights[c.night] = { stars: stars, time: time };
@@ -2393,6 +2416,10 @@ var PL = (typeof window !== 'undefined') ? (window.PL = window.PL || {}) : (glob
       if (next) r.unlock = 'Tomorrow night, a new suspect: <b>the ' + PL.species(next).name + '</b>.';
       if (!wasLate && p.nights[6]) r.unlock = '<b>Late Shift</b> is open: endless cases you can send to friends.';
       r.buttons = c.night < 30 ? [['Next night →', 'nextNight', true], ['Case Files', 'nights']] : [['Case Files', 'nights', true], ['Menu', 'title']];
+      if (DEMO && c.night >= PL.DEMO_NIGHTS) {
+        r.unlock = 'That\'s the last night in the demo. <b>Tonight\'s Case</b> stays free, with a new porch every night.';
+        r.buttons = [['What\'s next', 'demoEnd', true], ['Menu', 'title']];
+      }
     } else if (c.mode === 'daily') {
       var had = p.daily[c.day];
       if (!had) {
@@ -2408,8 +2435,8 @@ var PL = (typeof window !== 'undefined') ? (window.PL = window.PL || {}) : (glob
       L.solved++; if (!L.best || time < L.best) L.best = time;
       var dare = PL.cases.encode(c.tier, c.poolSize, c.seed, time);
       r.share = 'I solved this PORCHLIGHT porch in ' + PL.fmtTime(time) + (st.hints ? ' (with ' + st.hints + ' hint' + (st.hints > 1 ? 's' : '') + ')' : '') + '. Your turn 🏮\n' +
-        (link ? link + '#c=' + dare + '\n' : '') + 'Dare code: ' + dare;
-      r.buttons = [['Copy dare', 'copyShare', true], ['Another', 'lateAgain'], ['Menu', 'title']];
+        (link ? link + (DEMO ? '' : '#c=' + dare) + '\n' : '') + 'Dare code: ' + dare;
+      r.buttons = DEMO ? [['Copy reply', 'copyShare', true], ['Menu', 'title']] : [['Copy dare', 'copyShare', true], ['Another', 'lateAgain'], ['Menu', 'title']];
     }
     G.save();
     G.phase = 'done';
@@ -2442,11 +2469,16 @@ var PL = (typeof window !== 'undefined') ? (window.PL = window.PL || {}) : (glob
       case 'title': UI.clear(); G.title(); break;
       case 'daily': G.startCase(PL.cases.daily(PL.dateKey())); break;
       case 'nights': setMenu(true); if (!G.demo || G.cs) newDemo(); G.cs = null; G.phase = 'title'; UI.nights(G.p); break;
-      case 'night': if (arg) G.startCase(PL.cases.night(+arg)); break;
-      case 'nextNight': G.startCase(PL.cases.night(G.cs.night + 1)); break;
-      case 'late': UI.late(G.p); break;
-      case 'lateGo': G.lateTier = arg; G.startCase(PL.cases.late(arg, 9, (Math.random() * 4294967296) >>> 0)); break;
-      case 'lateAgain': G.startCase(PL.cases.late(G.cs.tier, 9, (Math.random() * 4294967296) >>> 0)); break;
+      case 'night':
+        if (DEMO && +arg > PL.DEMO_NIGHTS) { UI.demoEnd(); break; }
+        if (arg) G.startCase(PL.cases.night(+arg)); break;
+      case 'nextNight':
+        if (DEMO && G.cs.night >= PL.DEMO_NIGHTS) { G.act('demoEnd'); break; }
+        G.startCase(PL.cases.night(G.cs.night + 1)); break;
+      case 'demoEnd': setMenu(true); if (!G.demo || G.cs) newDemo(); G.cs = null; G.phase = 'title'; UI.demoEnd(); break;
+      case 'late': if (DEMO) { UI.demoEnd(); break; } UI.late(G.p); break;
+      case 'lateGo': if (DEMO) break; G.lateTier = arg; G.startCase(PL.cases.late(arg, 9, (Math.random() * 4294967296) >>> 0)); break;
+      case 'lateAgain': if (DEMO) break; G.startCase(PL.cases.late(G.cs.tier, 9, (Math.random() * 4294967296) >>> 0)); break;
       case 'book': UI.book(G.p, nightReached()); break;
       case 'settings': UI.settings(G.p); break;
       case 'howto': UI.howto(); break;

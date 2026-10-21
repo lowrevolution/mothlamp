@@ -101,6 +101,17 @@ nav ul a:hover { color: var(--cream); background: var(--ink-2); }
 .soon .info h3 { font-size: clamp(1.7rem, 3.6vw, 2.2rem); }
 .tags span.status.soon-tag { background: var(--wing); }
 
+/* --- updates --- */
+.updates-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(20px, 4vw, 48px); align-items: center; padding: clamp(22px, 4vw, 40px); border-radius: 22px; background: radial-gradient(120% 140% at 0% 0%, rgba(255, 181, 71, 0.16), rgba(255, 181, 71, 0) 60%), var(--ink-2); box-shadow: 0 0 0 1px var(--hair) inset; }
+.updates-card .head { margin: 0; }
+.signup { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+.signup input { min-width: 0; min-height: 48px; padding: 0 18px; border-radius: 999px; border: 0; background: var(--ink); color: var(--cream); font: 400 1rem var(--body); box-shadow: 0 0 0 1px var(--hair) inset; }
+.signup input::placeholder { color: var(--cream-dim); }
+.signup input:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
+.signup-note { grid-column: 1 / -1; min-height: 1.4em; font-size: 0.92rem; color: var(--cream-dim); }
+.signup-note.ok { color: var(--lamp); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
 /* --- about --- */
 .about-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 64px); align-items: start; }
 .about-grid .lede { display: grid; gap: 16px; font-size: 1.1rem; }
@@ -153,7 +164,7 @@ footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: w
 @media (max-width: 820px) {
   .game, .about-grid, .press-grid { grid-template-columns: minmax(0, 1fr); }
   .game:nth-child(even) .shot { order: 0; }
-  .soon { grid-template-columns: minmax(0, 1fr); }
+  .soon, .updates-card { grid-template-columns: minmax(0, 1fr); }
   .soon-clip { max-width: 320px; }
   .gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   footer .wrap { grid-template-columns: minmax(0, 1fr); }
@@ -164,6 +175,7 @@ footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: w
   .logos { grid-template-columns: minmax(0, 1fr); }
   .gallery { grid-template-columns: minmax(0, 1fr); }
   .info .actions .btn { flex: 1 1 auto; }
+  .signup { grid-template-columns: minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -182,6 +194,7 @@ footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: w
     </a>
     <ul>
       <li><a href="#games">Games</a></li>
+      <li><a href="#updates">Updates</a></li>
       <li><a href="#about">About</a></li>
       <li><a href="#press">Press</a></li>
     </ul>
@@ -245,7 +258,7 @@ footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: w
             <span class="num">Demo</span>
             <h3>PORCHLIGHT</h3>
             <p class="hook">Something happened at the porch light. Work out who was where.</p>
-            <p class="desc">Drag the suspects onto a night porch until every witness statement is true, and the arrangement points to the culprit. Every case is generated, has exactly one answer, and never needs a guess. A new case every night, thirty nights of Case Files, and dare codes for your friends.</p>
+            <p class="desc">Drag the suspects onto a night porch until every witness statement is true, and the arrangement points to the culprit. Every case is generated, has exactly one answer, and never needs a guess. Tonight's Case is free every night, and the demo includes the first six nights of Case Files.</p>
             <div class="tags"><span class="status">Free demo</span><span>Daily deduction puzzle</span><span>New case nightly</span><span>No guessing</span></div>
             <div class="actions"><a class="btn primary" href="play/porchlight.html">Play PORCHLIGHT</a></div>
           </div>
@@ -265,6 +278,27 @@ footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: w
           <div class="tags"><span class="status soon-tag">Pre-alpha</span><span>Camouflage dare game</span><span>Not playable yet</span></div>
         </div>
       </aside>
+    </div>
+  </section>
+
+  <section id="updates" class="updates" aria-labelledby="updates-h">
+    <div class="wrap">
+      <div class="updates-card">
+        <div class="head">
+          <span class="label">Get updates</span>
+          <h2 id="updates-h">Hear when the lamp comes on.</h2>
+          <p class="dim">One email when there's news: the full games, new demos, and PEPPERED when it's ready. Nothing else.</p>
+        </div>
+        <!-- Sign-up provider: set data-action to the provider's form URL and data-field to its email field name
+             (Buttondown: https://buttondown.com/api/emails/embed-subscribe/USERNAME + "email";
+              Kit: https://app.kit.com/forms/FORM_ID/subscriptions + "email_address"). -->
+        <form class="signup" id="signup" method="post" target="_blank" data-action="" data-field="email" novalidate>
+          <label class="sr" for="signup-email">Email address</label>
+          <input id="signup-email" type="email" autocomplete="email" placeholder="you@example.com" required>
+          <button class="btn primary" type="submit">Get updates</button>
+          <p class="signup-note" id="signup-note" aria-live="polite"></p>
+        </form>
+      </div>
     </div>
   </section>
 
@@ -382,6 +416,19 @@ footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: w
 if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
   document.querySelectorAll('video[autoplay]').forEach(function (v) { v.removeAttribute('autoplay'); v.pause(); v.controls = true; });
 }
+// Email sign-up: posts to the provider set on the form (see the comment above it) in a new tab, where the provider
+// confirms the address. Until a provider is set, the form says so instead of pretending to work.
+(function () {
+  var form = document.getElementById('signup'), note = document.getElementById('signup-note');
+  var input = document.getElementById('signup-email'), action = form.getAttribute('data-action');
+  if (!action) note.textContent = 'Sign-up isn’t connected yet.';
+  form.addEventListener('submit', function (e) {
+    if (!input.value || !input.checkValidity()) { e.preventDefault(); note.className = 'signup-note'; note.textContent = 'Enter an email address, like you@example.com.'; input.focus(); return; }
+    if (!action) { e.preventDefault(); return; }
+    form.action = action; input.name = form.getAttribute('data-field') || 'email';
+    note.className = 'signup-note ok'; note.textContent = 'Nearly there: check your inbox to confirm.';
+  });
+})();
 // Copy buttons: copy the paragraph text of their block.
 document.querySelectorAll('.copybtn').forEach(function (b) {
   b.addEventListener('click', function () {
