@@ -2,7 +2,7 @@
 
 The site for **Mothlamp**, the tiny-games label of Low Revolution. A static page for GitHub Pages: the home page, the CHAINBLOOM and PORCHLIGHT demos playable in the browser, a "coming later" teaser for PEPPERED (paused, pre-alpha), and a press section.
 
-Planned address: <https://lowrevolution.github.io/mothlamp/> (repo `lowrevolution/Mothlamp`, private for now; to launch, make it public and turn on Pages from `main` at `/`). The game source repos stay private; only their single-file builds are copied here.
+Live at <https://lowrevolution.github.io/mothlamp/> since 21 Oct 2026 (public repo `lowrevolution/mothlamp`, Pages from `main` at `/`). The repo name must stay lowercase: Pages paths are case-sensitive, and the site's tags and both demos' links use `/mothlamp/`. The game source repos stay private; only single-file builds are copied here.
 
 ## Preview
 
@@ -46,4 +46,4 @@ The repo stays private until these are done:
    - CHAINBLOOM: done, https://mothlampstudios.itch.io/chainbloom. Publish the itch page before the site goes live; it shows "not found" while it's a draft.
    - PORCHLIGHT: still a preview copy in `play/`. Waiting for its itch.io page.
 3. **Demo gates.** `node tools/demo-check.js` in Chainbloom and Porchlight passes, and the manual gates (sound, real phones, cold playtests) are done.
-4. Make the repo public and turn on Pages from `main` at `/`.
+4. ~~Make the repo public and turn on Pages from `main` at `/`.~~ Done 21 Oct 2026.
