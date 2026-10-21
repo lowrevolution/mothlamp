@@ -1,0 +1,19 @@
+{
+  "about": "Mothlamp news, read by Mothy (the desk moth). Newest items can go anywhere in the list; each id must be unique and never reused. Mothy only shows items dated within three weeks of when it was installed.",
+  "items": [
+    {
+      "id": "2026-10-21-chainbloom-demo",
+      "date": "2026-10-21",
+      "title": "CHAINBLOOM's free demo is out",
+      "text": "One tap, and everything blooms. All eight nights, every jar and every rare are in the demo, plus a new Daily Bloom jar every day. Plays in your browser.",
+      "url": "https://mothlampstudios.itch.io/chainbloom"
+    },
+    {
+      "id": "2026-10-21-porchlight-demo",
+      "date": "2026-10-21",
+      "title": "PORCHLIGHT's free demo is out",
+      "text": "Something happened at the porch light. Work out who was where. Tonight's Case is free every night, and the demo has the first six nights of Case Files.",
+      "url": "https://mothlampstudios.itch.io/porchlight"
+    }
+  ]
+}

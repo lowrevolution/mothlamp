@@ -1,0 +1,18 @@
+{
+  "frames": 9,
+  "flaps": 8,
+  "moths": [
+    { "id": "peppered", "name": "Peppered Moth", "w": 73, "h": 48, "hz": 10, "speed": 170, "erratic": 0.5, "sweep": 0 },
+    { "id": "rosy", "name": "Rosy Maple Moth", "w": 65, "h": 43, "hz": 9, "speed": 150, "erratic": 0.45, "sweep": 0 },
+    { "id": "luna", "name": "Luna Moth", "w": 113, "h": 158, "hz": 5, "speed": 120, "erratic": 0.35, "sweep": 0 },
+    { "id": "atlas", "name": "Atlas Moth", "w": 163, "h": 97, "hz": 3.5, "speed": 100, "erratic": 0.3, "sweep": 0 },
+    { "id": "polyphemus", "name": "Polyphemus Moth", "w": 122, "h": 76, "hz": 5, "speed": 120, "erratic": 0.35, "sweep": 0 },
+    { "id": "io", "name": "Io Moth", "w": 84, "h": 62, "hz": 7, "speed": 140, "erratic": 0.4, "sweep": 0 },
+    { "id": "tiger", "name": "Garden Tiger", "w": 78, "h": 52, "hz": 9, "speed": 150, "erratic": 0.5, "sweep": 0 },
+    { "id": "hummingbird", "name": "Hummingbird Hawk-moth", "w": 58, "h": 37, "hz": 14, "speed": 260, "erratic": 0.25, "sweep": 24 },
+    { "id": "deathshead", "name": "Death's-head Hawkmoth", "w": 105, "h": 61, "hz": 12, "speed": 220, "erratic": 0.2, "sweep": 24 },
+    { "id": "elephant", "name": "Elephant Hawk-moth", "w": 71, "h": 41, "hz": 14, "speed": 210, "erratic": 0.25, "sweep": 24 },
+    { "id": "burnet", "name": "Six-spot Burnet", "w": 57, "h": 39, "hz": 8, "speed": 120, "erratic": 0.4, "sweep": 0 },
+    { "id": "comet", "name": "Comet Moth", "w": 129, "h": 280, "hz": 4, "speed": 110, "erratic": 0.3, "sweep": 0 }
+  ]
+}

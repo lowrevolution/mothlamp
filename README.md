@@ -1,6 +1,6 @@
 # Mothlamp
 
-The site for **Mothlamp**, the tiny-games label of Low Revolution. A static page for GitHub Pages: the home page, links to the CHAINBLOOM and PORCHLIGHT demos on itch.io, "coming later" teasers for PEPPERED (paused, pre-alpha) and SHAVINGS (prototype), and a press section.
+The site for **Mothlamp**, the tiny-games label of Low Revolution. A static page for GitHub Pages: the home page, links to the CHAINBLOOM and PORCHLIGHT demos on itch.io, "coming later" teasers for PEPPERED (paused, pre-alpha) and SHAVINGS (prototype), a "coming soon" card for MOTHY (the desktop moth), a moth from MOTHY that visits the page and links to that card, and a press section.
 
 Live at <https://lowrevolution.github.io/mothlamp/> since 21 Oct 2026 (public repo `lowrevolution/mothlamp`, Pages from `main` at `/`). The repo name must stay lowercase: Pages paths are case-sensitive, and the site's tags and both demos' links use `/mothlamp/`. The game source repos stay private, and no builds are copied here: the demos live on itch.io.
 
@@ -20,6 +20,8 @@ Then open <http://localhost:5320/>.
 | `assets/teaser/` | PEPPERED and SHAVINGS teaser clips (MP4 + WebM, 4:5) and posters |
 | `assets/shots/` | Title and gameplay screenshots, 1280×800 |
 | `assets/logo/` | Mark SVGs (on ink, on cream, one colour) and PNG lockups |
+| `assets/mothy/` | The page moth (`mothy.js`), one sprite strip per moth, `moths.json`, and MOTHY's card art. Regenerate the art from the Mothy repo with `Mothy.exe --web <this folder>` |
+| `news.json` | The news feed the Mothy app reads; the Lampmoth delivers new items. Ids must be unique and never reused |
 | `assets/og.png` | Link-preview image (1200×630) |
 | `tools/shots.js` | Captures fresh screenshots with headless Chrome from each game's `dist/*-demo.html` |
 | `tools/teaser.js` | Records the teasers from `../Peppered` and `../Shavings` dist builds: `node tools/teaser.js [peppered\|shavings]` (needs ffmpeg) |
