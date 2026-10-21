@@ -1,6 +1,6 @@
 # Mothlamp
 
-The site for **Mothlamp**, the tiny-games label of Low Revolution. A static page for GitHub Pages: the home page, links to the CHAINBLOOM and PORCHLIGHT demos on itch.io, a "coming later" teaser for PEPPERED (paused, pre-alpha), and a press section.
+The site for **Mothlamp**, the tiny-games label of Low Revolution. A static page for GitHub Pages: the home page, links to the CHAINBLOOM and PORCHLIGHT demos on itch.io, "coming later" teasers for PEPPERED (paused, pre-alpha) and SHAVINGS (prototype), and a press section.
 
 Live at <https://lowrevolution.github.io/mothlamp/> since 21 Oct 2026 (public repo `lowrevolution/mothlamp`, Pages from `main` at `/`). The repo name must stay lowercase: Pages paths are case-sensitive, and the site's tags and both demos' links use `/mothlamp/`. The game source repos stay private, and no builds are copied here: the demos live on itch.io.
 
@@ -17,12 +17,12 @@ Then open <http://localhost:5320/>.
 | Path | What |
 |---|---|
 | `index.html` | The whole site: hero, games, about, press. Palette and type from the brand sheet in `Chainbloom/studio/brand.html` |
-| `assets/teaser/` | PEPPERED teaser clip (MP4 + WebM, 4:5) and poster |
+| `assets/teaser/` | PEPPERED and SHAVINGS teaser clips (MP4 + WebM, 4:5) and posters |
 | `assets/shots/` | Title and gameplay screenshots, 1280×800 |
 | `assets/logo/` | Mark SVGs (on ink, on cream, one colour) and PNG lockups |
 | `assets/og.png` | Link-preview image (1200×630) |
 | `tools/shots.js` | Captures fresh screenshots with headless Chrome from each game's `dist/*-demo.html` |
-| `tools/teaser.js` | Records the PEPPERED teaser from `../Peppered/dist/peppered.html` (needs ffmpeg) |
+| `tools/teaser.js` | Records the teasers from `../Peppered` and `../Shavings` dist builds: `node tools/teaser.js [peppered\|shavings]` (needs ffmpeg) |
 | `tools/logos.js` | Renders the PNG logos, link-preview image and touch icon from the SVG marks |
 | `tools/cdp.js` | Tiny headless-Chrome driver (copied from Porchlight, plus `B.on` for CDP events) |
 

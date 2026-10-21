@@ -99,6 +99,7 @@ nav ul a:hover { color: var(--cream); background: var(--ink-2); }
 .soon { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: clamp(20px, 4vw, 48px); align-items: center; margin-top: clamp(44px, 6vw, 72px); padding: clamp(18px, 3vw, 28px); border-radius: 22px; background: var(--ink-2); box-shadow: 0 0 0 1px var(--hair) inset; }
 .soon-clip { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; border-radius: 14px; background: var(--ink); box-shadow: 0 0 0 1px var(--hair); }
 .soon .info h3 { font-size: clamp(1.7rem, 3.6vw, 2.2rem); }
+.soon + .soon { margin-top: clamp(16px, 2.4vw, 24px); }
 .tags span.status.soon-tag { background: var(--wing); }
 
 /* --- updates --- */
@@ -229,7 +230,7 @@ footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: w
     <div class="wrap">
       <div class="head">
         <span class="label">Under the lamp</span>
-        <h2 id="games-h">Two free demos. One more on the way.</h2>
+        <h2 id="games-h">Two free demos. Two more on the way.</h2>
         <p class="dim">Each demo runs on a phone or a desktop, needs no install, and fits in a single file. Play them, then tell me what you think.</p>
       </div>
 
@@ -278,6 +279,20 @@ footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: w
           <div class="tags"><span class="status soon-tag">Pre-alpha</span><span>Camouflage dare game</span><span>Not playable yet</span></div>
         </div>
       </aside>
+
+      <aside class="soon" aria-labelledby="soon-sv-h">
+        <video class="soon-clip" autoplay muted loop playsinline preload="metadata" poster="assets/teaser/shavings-poster.jpg" width="576" height="720" aria-label="SHAVINGS teaser: a square blank of cherry spins on a lathe and is turned into a candlestick, chips piling on the floor, then scores 95 percent">
+          <source src="assets/teaser/shavings.webm" type="video/webm">
+          <source src="assets/teaser/shavings.mp4" type="video/mp4">
+        </video>
+        <div class="info">
+          <span class="num">Coming later</span>
+          <h3 id="soon-sv-h">SHAVINGS</h3>
+          <p class="hook">Turn the wood. Match the piece. Keep the shavings.</p>
+          <p class="desc">A woodturning game. Put a square blank on the lathe and turn the piece on the card: a candlestick, a chess pawn, a pepper mill for a moth. There's no undo, so every pass near the line is a risk. Your score is how close you got, and there's a new piece every day.</p>
+          <div class="tags"><span class="status soon-tag">Prototype</span><span>Woodturning puzzle</span><span>Daily piece</span><span>Not playable yet</span></div>
+        </div>
+      </aside>
     </div>
   </section>
 
@@ -287,7 +302,7 @@ footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: w
         <div class="head">
           <span class="label">Get updates</span>
           <h2 id="updates-h">Hear when the lamp comes on.</h2>
-          <p class="dim">One email when there's news: the full games, new demos, and PEPPERED when it's ready. Nothing else.</p>
+          <p class="dim">One email when there's news: the full games, new demos, and PEPPERED and SHAVINGS when they're ready. Nothing else.</p>
         </div>
         <!-- Sign-ups go through FormSubmit (formsubmit.co), which emails each one to the Mothlamp inbox. The form posts to
              FormSubmit's alias for that inbox (activated 21 Oct 2026). To move to a newsletter service later, change
@@ -351,7 +366,7 @@ footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: w
             <tr><th scope="row">Label</th><td>Mothlamp</td></tr>
             <tr><th scope="row">Studio</th><td>Low Revolution, solo developer, Ireland</td></tr>
             <tr><th scope="row">Demos</th><td>CHAINBLOOM, PORCHLIGHT</td></tr>
-            <tr><th scope="row">In development</th><td>PEPPERED (pre-alpha)</td></tr>
+            <tr><th scope="row">In development</th><td>PEPPERED (pre-alpha), SHAVINGS (prototype)</td></tr>
             <tr><th scope="row">Status</th><td>Free demos in the browser</td></tr>
             <tr><th scope="row">Platforms</th><td>Any modern browser, phone or desktop</td></tr>
             <tr><th scope="row">Built with</th><td>Vanilla JavaScript, Canvas and WebAudio. No engine, no art or audio files.</td></tr>
