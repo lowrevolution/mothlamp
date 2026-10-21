@@ -289,12 +289,11 @@ footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: w
           <h2 id="updates-h">Hear when the lamp comes on.</h2>
           <p class="dim">One email when there's news: the full games, new demos, and PEPPERED when it's ready. Nothing else.</p>
         </div>
-        <!-- Sign-ups go through FormSubmit (formsubmit.co), which emails each one to mothlampstudios@pm.me. No account:
-             the first sign-up sends a one-time activation email to that inbox. After activating, FormSubmit offers a
-             random alias for the address; put it in data-action to keep the address out of the page source.
-             To move to a newsletter service later, change data-action and data-field (e.g. Buttondown:
-             https://buttondown.com/api/emails/embed-subscribe/USERNAME + "email"; Kit: https://app.kit.com/forms/FORM_ID/subscriptions + "email_address"). -->
-        <form class="signup" id="signup" method="post" data-action="https://formsubmit.co/mothlampstudios@pm.me" data-field="email" novalidate>
+        <!-- Sign-ups go through FormSubmit (formsubmit.co), which emails each one to the Mothlamp inbox. The form posts to
+             FormSubmit's alias for that inbox (activated 21 Oct 2026). To move to a newsletter service later, change
+             data-action and data-field (e.g. Buttondown: https://buttondown.com/api/emails/embed-subscribe/USERNAME + "email";
+             Kit: https://app.kit.com/forms/FORM_ID/subscriptions + "email_address"). -->
+        <form class="signup" id="signup" method="post" data-action="https://formsubmit.co/c4576dd33ec337210dd4d777308035e9" data-field="email" novalidate>
           <label class="sr" for="signup-email">Email address</label>
           <input id="signup-email" type="email" autocomplete="email" placeholder="you@example.com" required>
           <button class="btn primary" type="submit">Get updates</button>
