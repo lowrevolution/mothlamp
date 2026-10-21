@@ -1,11 +1,12 @@
-// Captures a title and a gameplay screenshot of each game in play/ (headless Chrome via tools/cdp.js).
-// Needs the site served on 5320 (the "mothlamp" launch config):  node tools/shots.js
+// Captures a title and a gameplay screenshot of each game's demo build (headless Chrome via tools/cdp.js).
+// Reads ../<Game>/dist/<game>-demo.html directly, so build the games first:  node tools/shots.js
 'use strict';
 var fs = require('fs');
 var path = require('path');
 var cdp = require('./cdp');
 
-var BASE = 'http://127.0.0.1:5320/play/';
+var GAMES = path.join(__dirname, '..', '..');
+function demo(folder, file) { return 'file:///' + path.join(GAMES, folder, 'dist', file).replace(/\\/g, '/'); }
 var OUT = path.join(__dirname, '..', 'assets', 'shots');
 function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 function clickText(t) {
@@ -22,13 +23,13 @@ function clickText(t) {
   }
   fs.mkdirSync(OUT, { recursive: true });
 
-  await B.go(BASE + 'chainbloom.html?skip');
+  await B.go(demo('Chainbloom', 'chainbloom-demo.html') + '?skip');
   await shot('chainbloom-title');
   await B.eval(clickText('Play')); await sleep(2000);
   await B.tap(600, 420); await sleep(1200);
   await shot('chainbloom-play');
 
-  await B.go(BASE + 'porchlight.html');
+  await B.go(demo('Porchlight', 'porchlight-demo.html'));
   await shot('porchlight-title');
   await B.eval(clickText('Tonight')); await sleep(1500);
   await B.eval(clickText('Investigate')); await sleep(1000);
