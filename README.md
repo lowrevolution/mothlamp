@@ -2,7 +2,7 @@
 
 The site for **Mothlamp**, the tiny-games label of Low Revolution. A static page for GitHub Pages: the home page, all three games playable in the browser, and a press section.
 
-Planned address: <https://lowrevolution.github.io/mothlamp/> (public repo `lowrevolution/mothlamp`, Pages from `main` at `/`). The game source repos stay private; only their single-file builds are copied here.
+Planned address: <https://lowrevolution.github.io/mothlamp/> (repo `lowrevolution/Mothlamp`, private for now; to launch, make it public and turn on Pages from `main` at `/`). The game source repos stay private; only their single-file builds are copied here.
 
 ## Preview
 
