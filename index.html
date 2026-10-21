@@ -433,6 +433,8 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
     if (!input.value || !input.checkValidity()) { e.preventDefault(); note.className = 'signup-note'; note.textContent = 'Enter an email address, like you@example.com.'; input.focus(); return; }
     if (!action) { e.preventDefault(); return; }
     form.action = action; input.name = form.getAttribute('data-field') || 'email';
+    // Come back to whichever copy of the page sent the form (the live site, or a local preview while testing).
+    if (/^https?:$/.test(location.protocol)) form.querySelector('[name=_next]').value = location.origin + location.pathname + '?signed-up#updates';
     note.className = 'signup-note ok'; note.textContent = 'Sending…';
   });
 })();
