@@ -2,6 +2,13 @@
   "about": "Mothlamp news, read by Mothy (the desk moth). Newest items can go anywhere in the list; each id must be unique and never reused. Mothy only shows items dated within three weeks of when it was installed.",
   "items": [
     {
+      "id": "2026-10-22-bugdunnit-rename",
+      "date": "2026-10-22",
+      "title": "PORCHLIGHT is now BUGDUNNIT",
+      "text": "Same porch, same bugs, a new case every night. Just a new name, and your saves and streak carry over.",
+      "url": "https://mothlampstudios.itch.io/bugdunnit"
+    },
+    {
       "id": "2026-10-21-chainbloom-demo",
       "date": "2026-10-21",
       "title": "CHAINBLOOM's free demo is out",
@@ -13,7 +20,7 @@
       "date": "2026-10-21",
       "title": "PORCHLIGHT's free demo is out",
       "text": "Something happened at the porch light. Work out who was where. Tonight's Case is free every night, and the demo has the first six nights of Case Files.",
-      "url": "https://mothlampstudios.itch.io/porchlight"
+      "url": "https://mothlampstudios.itch.io/bugdunnit"
     }
   ]
 }

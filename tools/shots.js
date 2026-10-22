@@ -29,13 +29,13 @@ function clickText(t) {
   await B.tap(600, 420); await sleep(1200);
   await shot('chainbloom-play');
 
-  await B.go(demo('Porchlight', 'porchlight-demo.html'));
-  await shot('porchlight-title');
+  await B.go(demo('Bugdunnit', 'bugdunnit-demo.html'));
+  await shot('bugdunnit-title');
   await B.eval(clickText('Tonight')); await sleep(1500);
   await B.eval(clickText('Investigate')); await sleep(1000);
   for (var i = 0; i < 3; i++) { await B.key('h'); await sleep(900); }
   await sleep(2500);
-  await shot('porchlight-play');
+  await shot('bugdunnit-play');
 
   if (B.logs.length) console.log(B.logs.join('\n'));
   await B.close();

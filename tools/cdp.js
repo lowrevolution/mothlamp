@@ -1,4 +1,4 @@
-// Minimal headless-Chrome driver (copied from Porchlight; adds B.on for CDP events) (no dependencies: Node's built-in WebSocket and fetch).
+// Minimal headless-Chrome driver (copied from Bugdunnit; adds B.on for CDP events) (no dependencies: Node's built-in WebSocket and fetch).
 //   const B = await require('./cdp').launch({ width: 390, height: 844, mobile: true });
 //   await B.go(url); await B.eval('1+1'); await B.tap(x, y); await B.shot('out.png'); await B.close();
 'use strict';
@@ -22,7 +22,7 @@ async function launch(o) {
   var exe = CANDIDATES.find(function (p) { return fs.existsSync(p); });
   if (!exe) throw new Error('no Chrome/Edge found; set CHROME');
   var port = o.port || 9333;
-  var dir = fs.mkdtempSync(path.join(os.tmpdir(), 'porchlight-cdp-'));
+  var dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bugdunnit-cdp-'));
   var proc = cp.spawn(exe, ['--headless=new', '--remote-debugging-port=' + port, '--user-data-dir=' + dir, '--no-first-run',
     '--hide-scrollbars', '--mute-audio', '--window-size=' + (o.width || 1280) + ',' + (o.height || 800), 'about:blank'], { stdio: 'ignore' });
   var ws, targets;
